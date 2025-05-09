@@ -1,0 +1,8 @@
+[run]
+source = rttlinfo
+parallel = True
+
+[paths]
+source =
+  rttlinfo/
+  /app/rttlinfo/
