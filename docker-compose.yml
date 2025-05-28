@@ -16,4 +16,3 @@ services:
       - ./rttlinfo:/app/rttlinfo
     ports:
       - "8000:8000"
-

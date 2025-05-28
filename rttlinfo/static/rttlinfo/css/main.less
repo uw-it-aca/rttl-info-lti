@@ -1,9 +1,55 @@
-a {
-  color: #4d66ca !important;
-}
+//a {
+  //color: #4d66ca !important;
+//}
 
 .h5 { color: #85754d; }
 
 /* uw purple utilities */
 .bg-purple { background-color: #4b2e83 !important; }
 .text-purple { color: #4b2e83 !important; }
+
+// UW Brand Colors
+@uw-purple: #4b2e83;
+@uw-gold: #b7a57a;
+@uw-metallic-gold: #85754d;
+@uw-light-gray: #d9d9d9;
+
+// Button primary override
+.btn-primary {
+  background-color: @uw-purple;
+  border-color: darken(@uw-purple, 5%);
+  font-weight: 500;
+  
+  &:hover,
+  &:focus {
+    background-color: darken(@uw-purple, 8%);
+    border-color: darken(@uw-purple, 12%);
+  }
+  
+  &:active,
+  &.active {
+    background-color: darken(@uw-purple, 12%);
+    border-color: darken(@uw-purple, 15%);
+  }
+}
+
+// Custom UW gold button
+.btn-uw-gold {
+  background-color: @uw-gold;
+  border-color: darken(@uw-gold, 5%);
+  color: #333;
+  
+  &:hover,
+  &:focus {
+    background-color: darken(@uw-gold, 8%);
+    border-color: darken(@uw-gold, 12%);
+    color: #333;
+  }
+  
+  &:active,
+  &.active {
+    background-color: darken(@uw-gold, 12%);
+    border-color: darken(@uw-gold, 15%);
+    color: #333;
+  }
+}

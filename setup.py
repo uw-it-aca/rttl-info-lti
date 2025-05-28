@@ -18,20 +18,21 @@ setup(
     version=VERSION,
     packages=['rttlinfo'],
     include_package_data=True,
-    install_requires=[
+    install_requires = [
         'Django~=4.2',
         'django-blti~=3.0',
-        'UW-RestClients-Canvas~=1.2',
-        'uw-memcached-clients~=1.0',
         'django-compressor',
+        'uw-memcached-clients~=1.0',
+        # 'UW-RestClients-Core~=1.4',
+        # 'UW-RestClients-Canvas~=1.2',
+        # 'UW-RestClients-PWS~=2.1',
     ],
     license='Apache License, Version 2.0',
-    description=(
-        'An LTI application that displays RTTL resources and status in Canvas'),
+    description='An LTI application that displays RTTL resources and status in Canvas',
     long_description=README,
     url='https://github.com/uw-it-aca/rttl-info-lti',
-    author="UW-IT SETS",
-    author_email="aca-it@uw.edu",
+    author = "UW-IT SETS",
+    author_email = "aca-it@uw.edu",
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
