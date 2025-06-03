@@ -1,0 +1,81 @@
+{% extends 'rttlinfo/base_blti.html' %}
+
+{% load static %}
+
+{% block content %}
+<div class="canvas-rttlinfo-container">
+
+  <div class="container-fluid mt-4">
+
+    <div class="row">
+      <div class="col">
+        <h1 class="h2 mb-3" id="uw_rttlinfo_header">
+          Request a JupyterHub
+        </h1>
+
+        <div class="p-3 mx-3 mb-5 rounded" style="background: #f4f2ea;">
+          <p class="lead">
+            Request a JupyterHub environment for your course. Once submitted, your request will be reviewed and you'll be notified when your JupyterHub is ready.
+          </p>
+          <div class="text-center">
+            <a class="btn btn-outline-secondary" href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">Learn more about JupyterHub</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-5">
+      <div class="col-md-8 mx-auto">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="h4 mb-0">Hub Request Form</h2>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              
+              {% for field in form %}
+                <div class="form-group mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">
+                    <strong>{{ field.label }}</strong>
+                    {% if field.field.required %}
+                      <span class="text-danger">*</span>
+                    {% endif %}
+                  </label>
+                  
+                  {% if field.help_text %}
+                    <small class="form-text text-muted d-block mb-2">{{ field.help_text }}</small>
+                  {% endif %}
+                  
+                  {{ field }}
+                  
+                  {% if field.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in field.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+              
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                  {% for error in form.non_field_errors %}
+                    {{ error }}
+                  {% endfor %}
+                </div>
+              {% endif %}
+              
+              <div class="d-flex justify-content-between align-items-center mt-4">
+                <a href="{% url 'lti-launch' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

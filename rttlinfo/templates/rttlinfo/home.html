@@ -9,12 +9,6 @@
 
     <div class="row">
       <div class="col">
-        <nav aria-label="breadcrumb" class="mb-2">
-          <ol class="breadcrumb bg-light">
-            <li class="breadcrumb-item"><a href="javascript:history.back()">Back to Resources</a></li>
-            <li class="breadcrumb-item active" aria-current="page">JupyterHub Details</li>
-          </ol>
-        </nav>
         <h1 class="h2 mb-3" id="uw_rttlinfo_header">
           UW-IT JupyterHub for Teaching and Learning
         </h1>
@@ -78,35 +72,36 @@
                     <h3 class="h5 mb-0">Actions</h3>
                   </div>
                   <div class="card-body">
-                    <!-- Hub exists and is deployed -->
                     {% if rttl_hub_exists and rttl_hub_deployed %}
+                      <!-- Hub exists and is deployed -->
                       <a href="{{ rttl_hub_url }}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>
                       {% if is_instructor or is_admin or is_ta %}
+                        <!-- Role check -->
                         <!-- Note: being in these groups does not guarantee Hub admin access - refactor? -->
                         <a href="{{ rttl_hub_url }}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>
-                        <a href={% url 'hub-details' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
+                        <a href={% url 'hub-manage' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
                       {% endif %}
-                    <!-- Hub exists and is archived -->
                     {% elif rttl_hub_exists and rttl_hub_status == 'archived' %}
+                      <!-- Hub exists and is archived -->
                       <button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>
-                    <!-- Hub request has been made and is pending -->
                     {% elif rttl_hub_exists and rttl_hub_status == 'requested' %}
+                      <!-- Hub request has been made and is pending -->
                       {% if is_instructor or is_admin or is_ta %}
-                        <a href={% url 'hub-details' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
+                        <!-- Role check -->
+                        <a href={% url 'hub-manage' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
                       {% else %}
                         <button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>
                       {% endif %}
-                    <!-- Hub does not exist and no request found -->
                     {% else %}
+                      <!-- Hub does not exist and no request found -->
                       {% if is_instructor or is_admin or is_ta %}
-                        <a href={% url 'hub-request' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>
+                        <!-- Role check -->
+                        <a href={% url 'hub-request' %} class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>
                       {% else %}
                         <!-- TODO: workflow for students suggesting a Hub -->
                         <a href={% url 'hub-student-request' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>
                         {% endif %}
                     {% endif %}
-                      <!-- TODO: Do we want to redirect back to infohub? If so, is browser.back() going to be a reliable way to do that? -->
-                      <a href="javascript:history.back()" class="btn btn-outline-secondary btn-block mb-2">Back to Resources</a>
                       <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank">View Documentation</a>
                   </div>
                 </div>
@@ -116,8 +111,6 @@
         </div>
       </div>
     </div>
-
   </div>
-
 </div>
 {% endblock %}
