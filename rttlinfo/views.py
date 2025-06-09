@@ -50,24 +50,7 @@ class LaunchView(BLTILaunchView):
 
     def get_context_data(self, **kwargs):
         _ = super().get_context_data(**kwargs)
-        # TODO: Fetch rttl api data using repository
-        rttl_data = self.rttl_repository.get_course_status(
-            self.blti.course_sis_id)
-        # import pdb; pdb.set_trace()  # Breakpoint to inspect rttl_data
-        rttl_hub_exists = False
-        rttl_hub_url = None
-        rttl_hub_deployed = False
-        rttl_hub_status = None
-        rttl_hub_status_message = None
-
-        if rttl_data:
-            rttl_hub_exists = True
-            rttl_hub_url = rttl_data[0].get('hub_url')
-            rttl_hub_deployed = True if rttl_hub_url else False
-            rttl_hub_status = rttl_data[0]['latest_status'].get('status')
-            rttl_hub_status_message = rttl_data[0]['latest_status'].get(
-                'message')
-
+        # Return basic context without API call - hub data will be loaded via AJAX
         return {
             'session_id': self.request.session.session_key,
             'canvas_course_id': self.blti.canvas_course_id,
@@ -78,12 +61,57 @@ class LaunchView(BLTILaunchView):
             'is_ta': self.blti.is_teaching_assistant,
             'is_student': self.blti.is_student,
             'is_admin': self.blti.is_administrator,
-            'rttl_hub_exists': rttl_hub_exists,
-            'rttl_hub_url': rttl_hub_url,
-            'rttl_hub_deployed': rttl_hub_deployed,
-            'rttl_hub_status': rttl_hub_status,
-            'rttl_hub_status_message': rttl_hub_status_message,
+            'load_hub_data_async': True,  # Flag to trigger AJAX loading
         }
+
+
+class HubDataApiView(TemplateView):
+    """API endpoint for loading hub data asynchronously."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.rttl_repository = RttlInfoRepository()
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        course_sis_id = request.GET.get('course_sis_id')
+
+        if not course_sis_id:
+            return JsonResponse(
+                {'error': 'course_sis_id parameter required'},
+                status=400)
+
+        try:
+            # Fetch rttl api data using repository
+            rttl_data = self.rttl_repository.get_course_status(course_sis_id)
+            
+            rttl_hub_exists = False
+            rttl_hub_url = None
+            rttl_hub_deployed = False
+            rttl_hub_status = None
+            rttl_hub_status_message = None
+
+            if rttl_data:
+                rttl_hub_exists = True
+                rttl_hub_url = rttl_data[0].get('hub_url')
+                rttl_hub_deployed = True if rttl_hub_url else False
+                rttl_hub_status = rttl_data[0]['latest_status'].get('status')
+                rttl_hub_status_message = rttl_data[0]['latest_status'].get('message')
+
+            return JsonResponse({
+                'rttl_hub_exists': rttl_hub_exists,
+                'rttl_hub_url': rttl_hub_url,
+                'rttl_hub_deployed': rttl_hub_deployed,
+                'rttl_hub_status': rttl_hub_status,
+                'rttl_hub_status_message': rttl_hub_status_message,
+            })
+
+        except Exception as e:
+            logger.error(f"Error fetching hub data: {e}")
+            return JsonResponse({'error': 'Failed to fetch hub data'}, status=500)
 
 
 class HubManageView(TemplateView):
@@ -176,7 +204,8 @@ class HubRequestView(TemplateView):
                     'your hub is ready.'
                 )
 
-                return redirect('hub-manage')  # Redirect to the manage view
+                # return redirect('hub-manage')  # Redirect to the manage view
+                return redirect('lti-launch')
 
             except RttlApiError as e:
                 logger.error(f"API error when creating course status: {e}")
@@ -199,43 +228,6 @@ class HubRequestView(TemplateView):
 
         # If form is invalid or there was an error, re-render with form errors
         return render(request, self.template_name, {'form': form})
-
-
-""" DUPE class definition - or is the other one the dupe???
-class HubManageView(TemplateView):
-    # View for managing existing hubs.
-    template_name = 'rttlinfo/manage.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        blti_data = self.request.session.get('blti_data', {})
-        sis_course_id = blti_data.get('lis_course_offering_sourcedid')
-
-        if sis_course_id:
-            try:
-                client = get_rttl_client()
-                course_data = client.get_course_by_sis_id(sis_course_id)
-
-                if course_data:
-                    # Get detailed course info including statuses
-                    course_detail = client.get_course(course_data['id'])
-                    context['course'] = course_detail
-
-                    # Get configurations for this course
-                    configs = client.list_course_configs(course_data['id'])
-                    context['configurations'] = configs
-
-                else:
-                    context['course'] = None
-
-            except RttlApiError as e:
-                logger.error(f"Error fetching course data: {e}")
-                context['error'] = "Unable to fetch course information"
-
-        context['sis_course_id'] = sis_course_id
-        return context
-"""
 
 
 class HubStatusApiView(TemplateView):
@@ -376,55 +368,3 @@ class HubUpdateConfigView(TemplateView):
                 messages.error(request, 'An unexpected error occurred.')
 
         return render(request, self.template_name, {'form': form})
-
-
-"""
-class HubRequestView(TemplateView):
-    template_name = 'rttlinfo/request.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['blti_data'] = self.request.session.get('blti_data', {})
-        context['form'] = CourseConfigurationForm()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = CourseConfigurationForm(request.POST)
-        if form.is_valid():
-            # Use RttlApiClient to save the configuration
-            client = RttlApiClient()
-            config_data = form.cleaned_data
-            client.create_or_update_course_status(config_data)
-            # Redirect to the manage view or another page
-            return redirect('hub-manage')
-        return render(request, self.template_name, {'form': form})
-"""
-
-"""
-OLD CODE BELOW - KEEP FOR REFERENCE
-
-class HubRequestView(TemplateView):
-    template_name = 'rttlinfo/request.html'
-    cache_time = 60 * 60 * 4
-    date_format = '%a, %d %b %Y %H:%M:%S GMT'
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.rttl_repository = RttlInfoRepository()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['blti_data'] = self.request.session.get('blti_data', {})
-        # import pdb; pdb.set_trace()  # Breakpoint to inspect context
-        # querystring = self.request.environ.get('QUERY_STRING')
-        # q_list = querystring.split('&')
-
-        rttl_data = self.rttl_repository.get_course_status(
-            context['blti_data']['course_sis_id'])
-        # ^^ In theory we can't be in this view if this has data, but we're
-        #    checking just in case. Make sure to use caching.
-        if rttl_data:
-            # Return an error? Or just redirect to manage view?
-            # Must be a new hub request
-            pass
-"""

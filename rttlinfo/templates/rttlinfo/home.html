@@ -31,78 +31,55 @@
             <h2 class="h4 mb-0">JupyterHub status for {{ course_long_name }}</h2>
           </div>
           <div class="card-body">
-            <div class="row">
-              <div class="col-md-8">
-                <p class="lead">
-                  {% if rttl_hub_exists and rttl_hub_deployed %}
-                    A JupyterHub is available for this course. You can access it now!
-                  {% elif rttl_hub_exists and rttl_hub_status == 'requested' %}
-                    A JupyterHub has been requested for this course.
-                  {% else %}
-                    No JupyterHub has been requested for this course yet.
-                  {% endif %}
-                </p>
-                
-                {% if rttl_hub_exists %}
-                <div class="card mb-3">
-                  <div class="card-header">
-                    <h3 class="h5 mb-0">Hub Details</h3>
-                  </div>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                      <strong>Status:</strong> {{ rttl_hub_status }}
-                    </li>
-                    {% if rttl_hub_status_message %}
-                    <li class="list-group-item">
-                      <strong>Message:</strong> {{ rttl_hub_status_message }}
-                    </li>
-                    {% endif %}
-                    {% if rttl_hub_url and rttl_hub_deployed %}
-                    <li class="list-group-item">
-                      <strong>URL:</strong> <a href="{{ rttl_hub_url }}" target="_blank" class="d-inline-block">{{ rttl_hub_url }}</a>
-                    </li>
-                    {% endif %}
-                  </ul>
-                </div>
-                {% endif %}
+            <!-- Loading spinner - shown by default -->
+            <div id="hub-loading" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="sr-only">Loading...</span>
               </div>
-              <div class="col-md-4">
-                <div class="card">
-                  <div class="card-header">
-                    <h3 class="h5 mb-0">Actions</h3>
+              <p class="lead">Fetching Hub data...</p>
+            </div>
+
+            <!-- Error state - hidden by default -->
+            <div id="hub-error" class="alert alert-danger d-none" role="alert">
+              <h4 class="alert-heading">Error Loading Hub Data</h4>
+              <p>We were unable to load the JupyterHub status for this course. Please try refreshing the page.</p>
+              <button class="btn btn-outline-danger" onclick="loadHubData()">Retry</button>
+            </div>
+
+            <!-- Main content - hidden by default, will be shown when data loads -->
+            <div id="hub-content" class="d-none">
+              <div class="row">
+                <div class="col-md-8">
+                  <p class="lead" id="hub-status-text">
+                    <!-- Status text will be populated by JavaScript -->
+                  </p>
+                  
+                  <!-- Hub details card - will be shown/hidden by JavaScript -->
+                  <div class="card mb-3 d-none" id="hub-details-card">
+                    <div class="card-header">
+                      <h3 class="h5 mb-0">Hub Details</h3>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                      <li class="list-group-item">
+                        <strong>Status:</strong> <span id="hub-status-value"></span>
+                      </li>
+                      <li class="list-group-item d-none" id="hub-message-item">
+                        <strong>Message:</strong> <span id="hub-message-value"></span>
+                      </li>
+                      <li class="list-group-item d-none" id="hub-url-item">
+                        <strong>URL:</strong> <a href="#" target="_blank" class="d-inline-block" id="hub-url-link"></a>
+                      </li>
+                    </ul>
                   </div>
-                  <div class="card-body">
-                    {% if rttl_hub_exists and rttl_hub_deployed %}
-                      <!-- Hub exists and is deployed -->
-                      <a href="{{ rttl_hub_url }}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>
-                      {% if is_instructor or is_admin or is_ta %}
-                        <!-- Role check -->
-                        <!-- Note: being in these groups does not guarantee Hub admin access - refactor? -->
-                        <a href="{{ rttl_hub_url }}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>
-                        <a href={% url 'hub-manage' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
-                      {% endif %}
-                    {% elif rttl_hub_exists and rttl_hub_status == 'archived' %}
-                      <!-- Hub exists and is archived -->
-                      <button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>
-                    {% elif rttl_hub_exists and rttl_hub_status == 'requested' %}
-                      <!-- Hub request has been made and is pending -->
-                      {% if is_instructor or is_admin or is_ta %}
-                        <!-- Role check -->
-                        <a href={% url 'hub-manage' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>
-                      {% else %}
-                        <button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>
-                      {% endif %}
-                    {% else %}
-                      <!-- Hub does not exist and no request found -->
-                      {% if is_instructor or is_admin or is_ta %}
-                        <!-- Role check -->
-                        <a href={% url 'hub-request' %} class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>
-                      {% else %}
-                        <!-- TODO: workflow for students suggesting a Hub -->
-                        <a href={% url 'hub-student-request' %}?course_sis_id={{ course_sis_id }} class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>
-                        {% endif %}
-                    {% endif %}
-                      <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank">View Documentation</a>
+                </div>
+                <div class="col-md-4">
+                  <div class="card">
+                    <div class="card-header">
+                      <h3 class="h5 mb-0">Actions</h3>
+                    </div>
+                    <div class="card-body" id="hub-actions">
+                      <!-- Action buttons will be populated by JavaScript -->
+                    </div>
                   </div>
                 </div>
               </div>
@@ -113,4 +90,138 @@
     </div>
   </div>
 </div>
+
+<script>
+// Global variables from Django template
+const COURSE_SIS_ID = '{{ course_sis_id }}';
+const COURSE_LONG_NAME = '{{ course_long_name }}';
+const IS_INSTRUCTOR = {{ is_instructor|yesno:"true,false" }};
+const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
+const IS_TA = {{ is_ta|yesno:"true,false" }};
+
+function loadHubData() {
+  // Show loading spinner, hide other content
+  document.getElementById('hub-loading').classList.remove('d-none');
+  document.getElementById('hub-content').classList.add('d-none');
+  document.getElementById('hub-error').classList.add('d-none');
+
+  // Make AJAX call to fetch hub data
+  fetch(`{% url 'hub-data-api' %}?course_sis_id=${encodeURIComponent(COURSE_SIS_ID)}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Hide loading spinner
+      document.getElementById('hub-loading').classList.add('d-none');
+      
+      // Show main content
+      document.getElementById('hub-content').classList.remove('d-none');
+      
+      // Populate the UI with the fetched data
+      updateHubUI(data);
+    })
+    .catch(error => {
+      console.error('Error loading hub data:', error);
+      
+      // Hide loading spinner
+      document.getElementById('hub-loading').classList.add('d-none');
+      
+      // Show error message
+      document.getElementById('hub-error').classList.remove('d-none');
+    });
+}
+
+function updateHubUI(hubData) {
+  const statusText = document.getElementById('hub-status-text');
+  const detailsCard = document.getElementById('hub-details-card');
+  const actionsContainer = document.getElementById('hub-actions');
+
+  // Update status text
+  if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
+    statusText.textContent = 'A JupyterHub is available for this course. You can access it now!';
+  } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
+    statusText.textContent = 'A JupyterHub has been requested for this course.';
+  } else {
+    statusText.textContent = 'No JupyterHub has been requested for this course yet.';
+  }
+
+  // Show/hide and populate hub details card
+  if (hubData.rttl_hub_exists) {
+    detailsCard.classList.remove('d-none');
+    
+    // Update status value
+    document.getElementById('hub-status-value').textContent = hubData.rttl_hub_status || 'Unknown';
+    
+    // Show/hide message
+    const messageItem = document.getElementById('hub-message-item');
+    const messageValue = document.getElementById('hub-message-value');
+    if (hubData.rttl_hub_status_message) {
+      messageValue.textContent = hubData.rttl_hub_status_message;
+      messageItem.classList.remove('d-none');
+    } else {
+      messageItem.classList.add('d-none');
+    }
+    
+    // Show/hide URL
+    const urlItem = document.getElementById('hub-url-item');
+    const urlLink = document.getElementById('hub-url-link');
+    if (hubData.rttl_hub_url && hubData.rttl_hub_deployed) {
+      urlLink.href = hubData.rttl_hub_url;
+      urlLink.textContent = hubData.rttl_hub_url;
+      urlItem.classList.remove('d-none');
+    } else {
+      urlItem.classList.add('d-none');
+    }
+  } else {
+    detailsCard.classList.add('d-none');
+  }
+
+  // Populate actions
+  actionsContainer.innerHTML = generateActionButtons(hubData);
+}
+
+function generateActionButtons(hubData) {
+  let buttons = '';
+
+  if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
+    // Hub exists and is deployed
+    buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>`;
+    
+    if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+      buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>`;
+      buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+    }
+  } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
+    // Hub exists and is archived
+    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>';
+  } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
+    // Hub request has been made and is pending
+    if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+      buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+    } else {
+      buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
+    }
+  } else {
+    // Hub does not exist and no request found
+    if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+      buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
+    } else {
+      buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
+    }
+  }
+
+  // Always show documentation link
+  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank">View Documentation</a>';
+
+  return buttons;
+}
+
+// Load hub data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadHubData();
+});
+</script>
 {% endblock %}

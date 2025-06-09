@@ -66,7 +66,9 @@ class RttlApiClient:
             method: str,
             endpoint: str,
             params: dict = None) -> str:
-        """Generate cache key for request."""
+        """
+        Generate cache key for request.
+        """
         key_data = f"{method}:{endpoint}"
         if params:
             key_data += f":{json.dumps(params, sort_keys=True)}"
