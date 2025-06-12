@@ -116,6 +116,7 @@ local_dev
 project
 manage.py
 staticfiles
+.vscode
 
 # Spyder project settings
 .spyderproject

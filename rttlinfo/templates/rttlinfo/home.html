@@ -192,7 +192,8 @@ function generateActionButtons(hubData) {
     
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>`;
-      buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+      // mamnage feature is not implemented yet
+      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
     }
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
     // Hub exists and is archived
@@ -200,7 +201,9 @@ function generateActionButtons(hubData) {
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
     // Hub request has been made and is pending
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
-      buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+      // manage feature is not implemented yet
+      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+      buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     } else {
       buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }

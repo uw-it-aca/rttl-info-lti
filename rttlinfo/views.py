@@ -34,6 +34,7 @@ class LaunchView(BLTILaunchView):
         # DEV __ONLY__ ^^
         # Used because django runserver doesn't handle this correctly
         response = super().dispatch(request, *args, **kwargs)
+
         request.session['blti_data'] = {
             'canvas_course_id': self.blti.canvas_course_id,
             'course_sis_id': self.blti.course_sis_id,
@@ -50,7 +51,8 @@ class LaunchView(BLTILaunchView):
 
     def get_context_data(self, **kwargs):
         _ = super().get_context_data(**kwargs)
-        # Return basic context without API call - hub data will be loaded via AJAX
+        # Return basic context without API call
+        # hub data will be loaded via AJAX
         return {
             'session_id': self.request.session.session_key,
             'canvas_course_id': self.blti.canvas_course_id,
@@ -66,7 +68,9 @@ class LaunchView(BLTILaunchView):
 
 
 class HubDataApiView(TemplateView):
-    """API endpoint for loading hub data asynchronously."""
+    """
+    API endpoint for loading hub data asynchronously.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -87,7 +91,10 @@ class HubDataApiView(TemplateView):
         try:
             # Fetch rttl api data using repository
             rttl_data = self.rttl_repository.get_course_status(course_sis_id)
-            
+            """
+            Returns something like:
+            [{'id': 11, 'name': 'PSYCH 102 A Au 19, Introduction To Psychology II', 'course_year': 2019, 'course_quarter': 4, 'sis_course_id': '2019-autumn-PSYCH-102-A', 'hub_url': '', 'last_changed': '2025-06-03T15:43:40.363412-07:00', 'latest_status': {'id': 16, 'status': 'requested', 'hub_deployed': False, 'message': 'JupyterHub configuration requested via web form', 'configuration': {'configuration_applied': False, 'cpu_request': 2, 'memory_request': 3, 'storage_request': 4, 'image_uri': 'https://example.com/imagename', 'image_tag': 'main', 'features_request': '', 'gitpuller_targets': [], 'configuration_comments': 'heyhey', 'create_timestamp': '2025-06-03T15:43:40.567793-07:00'}, 'status_added': '2025-06-03T15:43:40.565744-07:00', 'course': 11}, 'in_admin_courses': False}]
+            """
             rttl_hub_exists = False
             rttl_hub_url = None
             rttl_hub_deployed = False
@@ -99,7 +106,8 @@ class HubDataApiView(TemplateView):
                 rttl_hub_url = rttl_data[0].get('hub_url')
                 rttl_hub_deployed = True if rttl_hub_url else False
                 rttl_hub_status = rttl_data[0]['latest_status'].get('status')
-                rttl_hub_status_message = rttl_data[0]['latest_status'].get('message')
+                rttl_hub_status_message = rttl_data[0]['latest_status'].get(
+                    'message')
 
             return JsonResponse({
                 'rttl_hub_exists': rttl_hub_exists,
@@ -111,7 +119,8 @@ class HubDataApiView(TemplateView):
 
         except Exception as e:
             logger.error(f"Error fetching hub data: {e}")
-            return JsonResponse({'error': 'Failed to fetch hub data'}, status=500)
+            return JsonResponse({'error': 'Failed to fetch hub data'},
+                                status=500)
 
 
 class HubManageView(TemplateView):
@@ -136,6 +145,10 @@ class HubManageView(TemplateView):
         if not course_sis_id:
             return HttpResponse(status=400, content='Missing course_sis_id')
         rttl_data = self.rttl_repository.get_course_status(course_sis_id)
+        """
+        Returns something like:
+        {'id': 11, 'name': 'PSYCH 102 A Au 19, Introduction To Psychology II', 'course_year': 2019, 'course_quarter': 4, 'sis_course_id': '2019-autumn-PSYCH-102-A', 'hub_url': '', 'last_changed': '2025-06-03T15:43:40.363412-07:00', 'statuses': [{'id': 16, 'status': 'requested', 'hub_deployed': False, 'message': 'JupyterHub configuration requested via web form', 'configuration': {'configuration_applied': False, 'cpu_request': 2, 'memory_request': 3, 'storage_request': 4, 'image_uri': 'https://example.com/imagename', 'image_tag': 'main', 'features_request': '', 'gitpuller_targets': [], 'configuration_comments': 'heyhey', 'create_timestamp': '2025-06-03T15:43:40.567793-07:00'}, 'status_added': '2025-06-03T15:43:40.565744-07:00', 'course': 11}], 'in_admin_courses': False}
+        """
         if not rttl_data:
             # Must be a new hub request
             pass
@@ -231,7 +244,9 @@ class HubRequestView(TemplateView):
 
 
 class HubStatusApiView(TemplateView):
-    """API endpoint for checking hub status."""
+    """
+    API endpoint for checking hub status.
+    """
 
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
@@ -277,6 +292,7 @@ class HubStatusApiView(TemplateView):
 
 
 # Helper view for updating existing configurations
+# Duplicates 'manage' view?
 class HubUpdateConfigView(TemplateView):
     template_name = 'rttlinfo/update_config.html'
 
@@ -350,7 +366,7 @@ class HubUpdateConfigView(TemplateView):
 
                 # Submit the update
                 client = get_rttl_client()
-                response = client.create_or_update_course_status(
+                _ = client.create_or_update_course_status(
                     status_update.to_api_data())
 
                 messages.success(
