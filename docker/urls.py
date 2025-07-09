@@ -4,6 +4,6 @@ from django.urls import re_path
 
 
 urlpatterns += [
-    re_path(r'^', include('rttlinfo.urls')),
-    re_path(r'^blti/', include('blti.urls')),
+    re_path(r'^rttlinfo/', include('rttlinfo.urls')),
+    re_path(r'^rttlinfo/blti/', include('blti.urls')),
 ]

@@ -15,9 +15,7 @@ Project settings.py
 
 **REST client app settings**
 
-    RESTCLIENTS_CANVAS_DAO_CLASS = 'Live'
-    RESTCLIENTS_CANVAS_HOST = 'example.instructure.com'
-    RESTCLIENTS_CANVAS_OAUTH_BEARER = '...'
+    RTTL_API_KEY = 'Valid_RTTL_REST API key'
 
 **BLTI settings**
 
@@ -25,4 +23,6 @@ Project settings.py
 
 Project urls.py
 ---------------
-    url(r'^rttlinfo/', include('rttlinfo.urls')),
+    Assuming the ingress URL is `https://example.com/rttlinfo/`
+    re_path(r'^rttlinfo/', include('rttlinfo.urls')),
+    re_path(r'^rttlinfo/blti/', include('blti.urls')),

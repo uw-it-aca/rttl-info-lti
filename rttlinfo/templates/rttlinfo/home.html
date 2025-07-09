@@ -2,6 +2,8 @@
 
 {% load static %}
 
+{% csrf_token %}
+
 {% block content %}
 <div class="canvas-rttlinfo-container">
 
@@ -98,6 +100,14 @@ const COURSE_LONG_NAME = '{{ course_long_name }}';
 const IS_INSTRUCTOR = {{ is_instructor|yesno:"true,false" }};
 const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
 const IS_TA = {{ is_ta|yesno:"true,false" }};
+const IS_ELIGIBLE = {{ is_eligible|yesno:"true,false" }};
+
+// Get CSRF token
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+         document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+         '{{ csrf_token }}';
+}
 
 function loadHubData() {
   // Show loading spinner, hide other content
@@ -106,7 +116,15 @@ function loadHubData() {
   document.getElementById('hub-error').classList.add('d-none');
 
   // Make AJAX call to fetch hub data
-  fetch(`{% url 'hub-data-api' %}?course_sis_id=${encodeURIComponent(COURSE_SIS_ID)}`)
+  fetch(`{% url 'hub-data-api' %}?course_sis_id=${encodeURIComponent(COURSE_SIS_ID)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken(),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    credentials: 'same-origin'
+  })
     .then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -144,6 +162,8 @@ function updateHubUI(hubData) {
     statusText.textContent = 'A JupyterHub is available for this course. You can access it now!';
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
     statusText.textContent = 'A JupyterHub has been requested for this course.';
+  } else if (!IS_ELIGIBLE) {
+    statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609">UW Connect</a>';
   } else {
     statusText.textContent = 'No JupyterHub has been requested for this course yet.';
   }
@@ -159,7 +179,8 @@ function updateHubUI(hubData) {
     const messageItem = document.getElementById('hub-message-item');
     const messageValue = document.getElementById('hub-message-value');
     if (hubData.rttl_hub_status_message) {
-      messageValue.textContent = hubData.rttl_hub_status_message;
+      // messageValue.textContent = hubData.rttl_hub_status_message;
+      messageValue.innerHTML = hubData.rttl_hub_status_message;
       messageItem.classList.remove('d-none');
     } else {
       messageItem.classList.add('d-none');
@@ -207,13 +228,16 @@ function generateActionButtons(hubData) {
     } else {
       buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }
-  } else {
-    // Hub does not exist and no request found
+  } else if (IS_ELIGIBLE){
+    // Hub does not exist and no request found, but is eligible to request
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
     } else {
       buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
     }
+  } else {
+    // Hub does not exist and no request found, and is not eligible to request a new hub
+    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Course is not eligible for a JupyterHub</button>';
   }
 
   // Always show documentation link
@@ -227,4 +251,5 @@ document.addEventListener('DOMContentLoaded', function() {
   loadHubData();
 });
 </script>
+<meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}

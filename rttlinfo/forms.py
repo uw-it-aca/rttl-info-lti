@@ -51,7 +51,7 @@ class CourseConfigurationForm(forms.Form):
         help_text='Number of CPU cores to request (e.g., 1, 2)',
         required=False,
         min_value=1,
-        max_value=8,
+        max_value=4,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'placeholder': '1'
@@ -63,7 +63,7 @@ class CourseConfigurationForm(forms.Form):
         help_text='Amount of memory to request in gigabytes',
         required=False,
         min_value=1,
-        max_value=32,
+        max_value=4,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'placeholder': '2'
@@ -75,7 +75,7 @@ class CourseConfigurationForm(forms.Form):
         help_text='Amount of storage to request in gigabytes',
         required=False,
         min_value=1,
-        max_value=100,
+        max_value=20,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
             'placeholder': '10'
@@ -424,7 +424,7 @@ class HubRequestForm(forms.Form):
         help_text='Amount of memory per student in GB (2-8 recommended)',
         required=False,
         min_value=1,
-        max_value=16,
+        max_value=4,
         initial=2,
         widget=forms.NumberInput(attrs={
             'class': 'form-control'
@@ -436,7 +436,7 @@ class HubRequestForm(forms.Form):
         help_text='Amount of storage per student in GB',
         required=False,
         min_value=1,
-        max_value=50,
+        max_value=20,
         initial=5,
         widget=forms.NumberInput(attrs={
             'class': 'form-control'

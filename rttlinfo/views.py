@@ -1,10 +1,9 @@
 # Copyright 2025 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-# from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse  # StreamingHttpResponse
-from django.views.generic import TemplateView  # View
-from blti.views import BLTILaunchView  # RESTDispatch
+from django.http import HttpResponse
+from django.views.generic import TemplateView
+from blti.views import BLTILaunchView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
@@ -12,18 +11,15 @@ from django.views.decorators.csrf import csrf_exempt
 from logging import getLogger
 from .api.repositories.rttl_repository import RttlInfoRepository
 from django.shortcuts import render, redirect
-from .forms import CourseConfigurationForm  # HubRequestForm
+from .forms import CourseConfigurationForm
 from .api.clients.rttl_client import get_rttl_client, RttlApiError
 from .dataclasses import CourseStatusUpdate
-
+from .utils import get_course_eligibility
 logger = getLogger(__name__)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class LaunchView(BLTILaunchView):
     template_name = 'rttlinfo/home.html'
-    # authorized_role = 'admin'
-    # ^^ Used for restricting access to admin users only
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -31,10 +27,9 @@ class LaunchView(BLTILaunchView):
 
     def dispatch(self, request, *args, **kwargs):
         request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
+        request.is_secure = lambda: True
         # DEV __ONLY__ ^^
-        # Used because django runserver doesn't handle this correctly
         response = super().dispatch(request, *args, **kwargs)
-
         request.session['blti_data'] = {
             'canvas_course_id': self.blti.canvas_course_id,
             'course_sis_id': self.blti.course_sis_id,
@@ -46,7 +41,9 @@ class LaunchView(BLTILaunchView):
             'is_student': self.blti.is_student,
             'is_admin': self.blti.is_administrator,
             'user_email': self.blti.user_email,
+            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
         }
+
         return response
 
     def get_context_data(self, **kwargs):
@@ -63,6 +60,7 @@ class LaunchView(BLTILaunchView):
             'is_ta': self.blti.is_teaching_assistant,
             'is_student': self.blti.is_student,
             'is_admin': self.blti.is_administrator,
+            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
             'load_hub_data_async': True,  # Flag to trigger AJAX loading
         }
 
@@ -160,19 +158,14 @@ class HubRequestView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['blti_data'] = self.request.session.get('blti_data', {})
-
-        # Use the appropriate form based on your needs
-        # For a simple configuration request:
         context['form'] = CourseConfigurationForm()
-
-        # Or for a full hub request with course info:
+        # Alt for a full hub request with course info:
         # context['form'] = HubRequestForm()
 
         return context
 
     def post(self, request, *args, **kwargs):
         form = CourseConfigurationForm(request.POST)
-
         if form.is_valid():
             try:
                 # Get BLTI data from session
@@ -186,7 +179,7 @@ class HubRequestView(TemplateView):
 
                 # Convert form to dataclass
                 config_dataclass = form.to_dataclass()
-                # create_timestamp=None ??
+                # create_timestamp=None
                 logger.info(f"Created configuration dataclass: \
                             {config_dataclass}")
 
@@ -196,7 +189,7 @@ class HubRequestView(TemplateView):
                     status='requested',
                     auto_create=True,
                     hub_deployed=False,
-                    message='JupyterHub configuration requested via web form',
+                    message=f"JupyterHub configuration requested via web form. Email <a href='mailto:help@uw.edu?subject={sis_course_id}'>help@uw.edu</a> if you need to make changes.",
                     configuration=config_dataclass,
                     # Populate course info from BLTI data if available
                     name=blti_data.get('course_long_name', '')
@@ -216,9 +209,7 @@ class HubRequestView(TemplateView):
                     'You will receive an email notification when '
                     'your hub is ready.'
                 )
-
-                # return redirect('hub-manage')  # Redirect to the manage view
-                return redirect('lti-launch')
+                return render(request, 'rttlinfo/home.html', blti_data)
 
             except RttlApiError as e:
                 logger.error(f"API error when creating course status: {e}")
@@ -259,7 +250,6 @@ class HubStatusApiView(TemplateView):
             return JsonResponse(
                 {'error': 'sis_course_id parameter required'},
                 status=400)
-
         try:
             client = get_rttl_client()
             course_data = client.get_course_by_sis_id(sis_course_id)
@@ -292,7 +282,7 @@ class HubStatusApiView(TemplateView):
 
 
 # Helper view for updating existing configurations
-# Duplicates 'manage' view?
+# Check if needed
 class HubUpdateConfigView(TemplateView):
     template_name = 'rttlinfo/update_config.html'
 
@@ -359,10 +349,6 @@ class HubUpdateConfigView(TemplateView):
                     message='Configuration updated via web form',
                     configuration=config_dataclass
                 )
-
-                # HEREIAM
-                # Breakpoint to inspect status_update
-                # import pdb; pdb.set_trace()
 
                 # Submit the update
                 client = get_rttl_client()
