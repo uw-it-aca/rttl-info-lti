@@ -162,6 +162,10 @@ function updateHubUI(hubData) {
     statusText.textContent = 'A JupyterHub is available for this course. You can access it now!';
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
     statusText.textContent = 'A JupyterHub has been requested for this course.';
+  } else if (hubData.rttl_hub_exists) {
+    statusText.textContent = 'JupyterHub information was found for this course - please see latest status below.';
+  } else if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+    statusText.innerHTML = 'No JupyterHub has been requested for this course yet. You can <a href="{% url "hub-request" %}">request a JupyterHub</a> if you are eligible.';
   } else if (!IS_ELIGIBLE) {
     statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609">UW Connect</a>';
   } else {
