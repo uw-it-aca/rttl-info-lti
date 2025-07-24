@@ -2,6 +2,8 @@ import re
 from uw_sws import term as sws_term
 from django.core.cache import cache
 from datetime import datetime, time, timedelta
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 def get_term_from_string(term_string):
@@ -57,6 +59,7 @@ def get_course_eligibility(course_sis):
     Note: this is a naive check based on the term and year in the SIS ID, and
     won't check other policy requirements like enrollments.
     """
+    logger.debug(f"Checking course eligibility for SIS ID: {course_sis}")
     try:
         # This also handles the case where source_sis is None or empty
         source_sis, sis = validate_source_sis(course_sis)
@@ -69,9 +72,11 @@ def get_course_eligibility(course_sis):
         # We can skip calling sws_term.get_current_term() here
         return True
     current_term = get_term_from_sws()
-    if course_year < current_term.year:
+    logger.debug(f"Current term: {current_term}")
+    if course_year < current_term['year']:
         return False
-    if course_year == current_term.year and course_term < current_term.quarter:
+    if course_year == current_term['year'] and \
+            course_term < get_term_from_string(current_term['quarter']):
         return False
     return True
 
@@ -92,6 +97,8 @@ def get_term_from_sws(use_cache=True):
 
     # Cache miss or cache disabled - fetch from SWS
     current_term = sws_term.get_current_term()
+    # Term obj contains weakrefs, so only cache JSON data
+    cacheable_current_term = current_term.json_data()
 
     if use_cache:
         # Calculate timeout until 11:59:59 PM today
@@ -105,6 +112,6 @@ def get_term_from_sws(use_cache=True):
         timeout_seconds = int((end_of_day - now).total_seconds())
 
         # Cache the result with calculated timeout
-        cache.set(cache_key, current_term, timeout_seconds)
+        cache.set(cache_key, cacheable_current_term, timeout_seconds)
 
-    return current_term
+    return cacheable_current_term

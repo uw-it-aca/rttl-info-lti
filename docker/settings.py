@@ -37,6 +37,10 @@ else:
     DEBUG = False
 
 RTTL_API_KEY = os.getenv('RTTL_API_KEY', '')
+RESTCLIENTS_SWS_OAUTH_BEARER = os.getenv('RESTCLIENTS_SWS_OAUTH_BEARER', '')
+RESTCLIENTS_CA_BUNDLE = os.getenv("RESTCLIENTS_CA_BUNDLE", "/etc/ssl/certs/ca-certificates.crt")
+RESTCLIENTS_SWS_DAO_CLASS = os.getenv('RESTCLIENTS_SWS_DAO_CLASS')
+RESTCLIENTS_SWS_HOST = os.getenv('RESTCLIENTS_SWS_HOST')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_SCHEME', 'https')
 
@@ -48,3 +52,20 @@ USE_X_FORWARDED_PORT = True
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+DEBUG_LOGGING = os.getenv('DEBUG_LOGGING', 'False')
+if DEBUG_LOGGING:
+    LOGGING['handlers']['console'] = {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://sys.stdout',
+    }
+    LOGGING['loggers']['rttlinfo'] = {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+        'propagate': True,
+    }
+    LOGGING['loggers']['blti'] = {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+        'propagate': False,
+    }

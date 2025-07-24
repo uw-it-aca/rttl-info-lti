@@ -26,6 +26,7 @@ class LaunchView(BLTILaunchView):
         self.rttl_repository = RttlInfoRepository()
 
     def dispatch(self, request, *args, **kwargs):
+        logger.debug(f"Launching LTI with request: {request}")
         request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
         request.is_secure = lambda: True
         # DEV __ONLY__ ^^
@@ -81,10 +82,9 @@ class HubDataApiView(TemplateView):
     def get(self, request, *args, **kwargs):
         course_sis_id = request.GET.get('course_sis_id')
 
-        if not course_sis_id:
+        if course_sis_id in [None, 'None', '']:
             return JsonResponse(
-                {'error': 'course_sis_id parameter required'},
-                status=400)
+                {'error': 'course_sis_id parameter required'}, status=400)
 
         try:
             # Fetch rttl api data using repository
@@ -246,10 +246,10 @@ class HubStatusApiView(TemplateView):
     def get(self, request, *args, **kwargs):
         sis_course_id = request.GET.get('sis_course_id')
 
-        if not sis_course_id:
+        if sis_course_id in [None, 'None', '']:
             return JsonResponse(
-                {'error': 'sis_course_id parameter required'},
-                status=400)
+                {'error': 'sis_course_id parameter required'}, status=400)
+
         try:
             client = get_rttl_client()
             course_data = client.get_course_by_sis_id(sis_course_id)

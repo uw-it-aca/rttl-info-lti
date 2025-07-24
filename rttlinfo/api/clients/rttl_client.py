@@ -156,13 +156,21 @@ class RttlApiClient:
         """
         Handle API response and return JSON data.
         """
-        try:
-            return response.json()
-        except ValueError as e:
-            logger.error(f"Invalid JSON response: {str(e)}")
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError as e:
+                logger.error(f"Invalid JSON response: {str(e)}")
+                raise RttlApiError(
+                    f"Invalid JSON response: {str(e)}",
+                    response.status_code)
+        else:
+            logger.error(
+                f"API error: {response.status_code} - {response.text}")
             raise RttlApiError(
-                f"Invalid JSON response: {str(e)}",
-                response.status_code)
+                f"API error: {response.status_code} - {response.text}",
+                response.status_code,
+                response.json() if response.content else None)
 
     # Course methods
     def list_courses(

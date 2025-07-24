@@ -165,7 +165,11 @@ function updateHubUI(hubData) {
   } else if (!IS_ELIGIBLE) {
     statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609">UW Connect</a>';
   } else {
-    statusText.textContent = 'No JupyterHub has been requested for this course yet.';
+    if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+      statusText.textContent = 'No JupyterHub has been requested for this course yet.';
+    } else {
+      statusText.textContent = 'This course is not using JupyterHub. Please contact your instructor or TA for more information.';
+    }
   }
 
   // Show/hide and populate hub details card
@@ -212,8 +216,10 @@ function generateActionButtons(hubData) {
     buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>`;
     
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+      // Note: admins in the course are not guaranteed to have admin access to the hub, so this may be an area for future improvement
+      // One option would be a get_admins endpoint in the RTTL API to query the hub and return a list of users with admin access
       buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>`;
-      // mamnage feature is not implemented yet
+      // manage feature is not implemented yet
       // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
     }
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
@@ -233,7 +239,8 @@ function generateActionButtons(hubData) {
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
     } else {
-      buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
+      // Voting not implemented yet      
+      // buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
     }
   } else {
     // Hub does not exist and no request found, and is not eligible to request a new hub
