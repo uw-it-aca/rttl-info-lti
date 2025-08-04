@@ -3,7 +3,7 @@ version: '3.4'
 services:
   app:
     environment:
-      ENV: localdev
+      ENV: devtest
       PORT: 8000
       AUTH: BLTI_DEV
       LTI_DEVELOP_APP: rttlinfo
@@ -16,4 +16,3 @@ services:
       - ./rttlinfo:/app/rttlinfo
     ports:
       - "8000:8000"
-

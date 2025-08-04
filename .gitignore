@@ -116,6 +116,7 @@ local_dev
 project
 manage.py
 staticfiles
+.vscode
 
 # Spyder project settings
 .spyderproject
@@ -134,3 +135,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# OS files
+.DS_Store

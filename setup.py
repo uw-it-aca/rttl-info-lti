@@ -21,13 +21,12 @@ setup(
     install_requires=[
         'Django~=4.2',
         'django-blti~=3.0',
-        'UW-RestClients-Canvas~=1.2',
-        'uw-memcached-clients~=1.0',
         'django-compressor',
+        'uw-memcached-clients~=1.0',
+        'UW-RestClients-SWS',
     ],
     license='Apache License, Version 2.0',
-    description=(
-        'An LTI application that displays RTTL resources and status in Canvas'),
+    description='An LTI application that displays RTTL resources and status',
     long_description=README,
     url='https://github.com/uw-it-aca/rttl-info-lti',
     author="UW-IT SETS",
