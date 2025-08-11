@@ -236,7 +236,7 @@ function generateActionButtons(hubData) {
     } else {
       buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }
-  } else if (IS_ELIGIBLE) { //IS_ELIGIBLE) {
+  } else if (IS_ELIGIBLE) {
     // Hub does not exist and no request found, but is eligible to request
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
