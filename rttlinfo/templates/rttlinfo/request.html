@@ -35,31 +35,339 @@
           <div class="card-body">
             <form method="post">
               {% csrf_token %}
-              
-              {% for field in form %}
-                <div class="form-group mb-3">
-                  <label for="{{ field.id_for_label }}" class="form-label">
-                    <strong>{{ field.label }}</strong>
-                    {% if field.field.required %}
-                      <span class="text-danger">*</span>
+
+              <!-- Course Information Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">Course Information</h3>
+                <strong> {{ blti_data.course_long_name }}</strong>
+                <small class="form-text text-muted d-block mb-2">Requesting as {{ blti_data.user_email}}</small>
+              </div>
+
+              <!-- Resource Requirements Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">Resource Requirements</h3>
+                <small class="form-text text-muted d-block mb-2">Computational resources to be allocated for each user's instance.</small>
+                <!-- CPU Request (full width for radio buttons) -->
+                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <label class="form-label"><strong>{{ form.cpu_request.label }}</strong></label>
+                    {% if form.cpu_request.help_text %}
+                        <small class="form-text text-muted">{{ form.cpu_request.help_text }}</small>
                     {% endif %}
-                  </label>
-                  
-                  {% if field.help_text %}
-                    <small class="form-text text-muted d-block mb-2">{{ field.help_text }}</small>
-                  {% endif %}
-                  
-                  {{ field }}
-                  
-                  {% if field.errors %}
-                    <div class="invalid-feedback d-block">
-                      {% for error in field.errors %}
-                        {{ error }}
+                  <div class="d-flex mb-2" style="gap: 2rem;">
+                      {% for radio in form.cpu_request %}
+                          <div class="form-check">
+                              {{ radio.tag }}
+                              <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                  {{ radio.choice_label }}
+                              </label>
+                          </div>
                       {% endfor %}
+                  </div>
+                    {% if form.cpu_request.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.cpu_request.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Memory Request (full width for radio buttons) -->
+                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <label class="form-label"><strong>{{ form.memory_request.label }}</strong></label>
+                      {% if form.memory_request.help_text %}
+                        <small class="form-text text-muted">{{ form.memory_request.help_text }}</small>
+                    {% endif %}
+                  <div class="d-flex mb-2" style="gap: 2rem;">
+                      {% for radio in form.memory_request %}
+                          <div class="form-check">
+                              {{ radio.tag }}
+                              <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                  {{ radio.choice_label }}
+                              </label>
+                          </div>
+                      {% endfor %}
+                  </div>
+                    {% if form.memory_request.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.memory_request.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Storage Request (full width for radio buttons) -->
+                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <label class="form-label"><strong>{{ form.storage_request.label }}</strong></label>
+                    {% if form.storage_request.help_text %}
+                        <small class="form-text text-muted">{{ form.storage_request.help_text }}</small>
+                    {% endif %}
+                  <div class="d-flex mb-2" style="gap: 2rem;">
+                      {% for radio in form.storage_request %}
+                          <div class="form-check">
+                              {{ radio.tag }}
+                              <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                  {{ radio.choice_label }}
+                              </label>
+                          </div>
+                      {% endfor %}
+                  </div>
+                    {% if form.storage_request.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.storage_request.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+              </div>
+
+              <!-- Container Image Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">Container Image</h3>
+                
+                <!-- Container Image Choice (radio buttons) -->
+                <div class="form-group mb-3">
+                  {% if form.container_image.help_text %}
+                    <small class="form-text text-muted d-block mb-2">{{ form.container_image.help_text }}</small>
+                  {% endif %}
+                  <div class="d-flex flex-column gap-2">
+                    {% for radio in form.container_image %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">
+                          {{ radio.choice_label|safe }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% if form.container_image.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in form.container_image.errors %}{{ error }}{% endfor %}
                     </div>
                   {% endif %}
                 </div>
-              {% endfor %}
+
+                <!-- Custom Image Fields (shown when Custom image is selected) -->
+                <div id="custom-image-fields" style="display: none;">
+                  <div class="alert alert-info" role="alert">
+                    <strong>Custom Image Requirements:</strong> 
+                    Please ensure your custom image is compatible with JupyterHub. We recommend basing your image on one of our 
+                    <a href="https://github.com/uw-it-aca/rttl-notebooks" target="_blank">supported images</a>.
+                    <a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/index.html" target="_blank">Start here</a> 
+                    for guidance and best practices around building custom images. Per UW-IT policy, instructors who choose the Custom 
+                    Image option are responsible for all support, testing, troubleshooting, bug fixing, and updates; 
+                    UW-IT cannot provide support outside of general cloud platform support. 
+                  </div>
+                  
+                  <div class="row">
+                    <!-- Custom Image URL -->
+                    <div class="col-md-8">
+                      <div class="form-group mb-3">
+                        <label for="{{ form.custom_image_url.id_for_label }}" class="form-label">
+                          <strong>{{ form.custom_image_url.label }}</strong>
+                          <span class="text-danger">*</span>
+                        </label>
+                        {% if form.custom_image_url.help_text %}
+                          <small class="form-text text-muted d-block mb-2">{{ form.custom_image_url.help_text }}</small>
+                        {% endif %}
+                        {{ form.custom_image_url }}
+                        {% if form.custom_image_url.errors %}
+                          <div class="invalid-feedback d-block">
+                            {% for error in form.custom_image_url.errors %}{{ error }}{% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Custom Image Tag -->
+                    <div class="col-md-4">
+                      <div class="form-group mb-3">
+                        <label for="{{ form.custom_image_tag.id_for_label }}" class="form-label">
+                          <strong>{{ form.custom_image_tag.label }}</strong>
+                          <span class="text-danger">*</span>
+                        </label>
+                        {% if form.custom_image_tag.help_text %}
+                          <small class="form-text text-muted d-block mb-2">{{ form.custom_image_tag.help_text }}</small>
+                        {% endif %}
+                        {{ form.custom_image_tag }}
+                        {% if form.custom_image_tag.errors %}
+                          <div class="invalid-feedback d-block">
+                            {% for error in form.custom_image_tag.errors %}{{ error }}{% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  // Handle container image toggle
+                  const radioButtons = document.querySelectorAll('input[name="container_image"]');
+                  const customFields = document.getElementById('custom-image-fields');
+                  
+                  function toggleCustomFields() {
+                    const selectedValue = document.querySelector('input[name="container_image"]:checked')?.value;
+                    if (selectedValue === 'custom') {
+                      customFields.style.display = 'block';
+                    } else {
+                      customFields.style.display = 'none';
+                    }
+                  }
+                  
+                  radioButtons.forEach(function(radio) {
+                    radio.addEventListener('change', toggleCustomFields);
+                  });
+                  
+                  // Check initial state
+                  toggleCustomFields();
+
+                  // Handle git repository section chevron rotation
+                  $('#gitRepositorySection').on('show.bs.collapse', function () {
+                    document.getElementById('gitRepoChevron').textContent = '▼';
+                  });
+                  
+                  $('#gitRepositorySection').on('hide.bs.collapse', function () {
+                    document.getElementById('gitRepoChevron').textContent = '▶';
+                  });
+                });
+              </script>
+
+              <!-- Features Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">Features</h3>
+                
+                <!-- NFS Feature -->
+                <div class="form-group mb-3">
+                  <div class="form-check">
+                    {{ form.feature_nfs }}
+                    <label class="form-check-label" for="{{ form.feature_nfs.id_for_label }}">
+                      <strong>{{ form.feature_nfs.label }}</strong>
+                    </label>
+                    {% if form.feature_nfs.help_text %}
+                      <small class="form-text text-muted d-block">{{ form.feature_nfs.help_text }}</small>
+                    {% endif %}
+                  </div>
+                  {% if form.feature_nfs.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in form.feature_nfs.errors %}{{ error }}{% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- BinderHub Feature -->
+              <!-- 
+                <div class="form-group mb-3">
+                  <div class="form-check">
+                    {{ form.feature_binderhub }}
+                    <label class="form-check-label" for="{{ form.feature_binderhub.id_for_label }}">
+                      <strong>{{ form.feature_binderhub.label }}</strong>
+                    </label>
+                    {% if form.feature_binderhub.help_text %}
+                      <small class="form-text text-muted d-block">{{ form.feature_binderhub.help_text }}</small>
+                    {% endif %}
+                  </div>
+                  {% if form.feature_binderhub.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in form.feature_binderhub.errors %}{{ error }}{% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>  -->
+
+              <!-- Git Repository Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">
+                  <button class="btn btn-link p-0 text-primary text-decoration-none h5" type="button" data-toggle="collapse" data-target="#gitRepositorySection" aria-expanded="false" aria-controls="gitRepositorySection" style="font-size: inherit; font-weight: inherit;">
+                    <span id="gitRepoChevron">▶</span>
+                    Git Repository (Optional)
+                  </button>
+                </h3>
+                
+                <div class="collapse" id="gitRepositorySection">
+                  <!-- Git Repository URI -->
+                  <div class="form-group mb-3">
+                    <label for="{{ form.gitpuller_uri.id_for_label }}" class="form-label">
+                      <strong>{{ form.gitpuller_uri.label }}</strong>
+                      {% if form.gitpuller_uri.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    {% if form.gitpuller_uri.help_text %}
+                      <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_uri.help_text|safe }}</small>
+                    {% endif %}
+                    {{ form.gitpuller_uri }}
+                    {% if form.gitpuller_uri.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in form.gitpuller_uri.errors %}{{ error }}{% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="row">
+                    <!-- Git Branch/Tag -->
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label for="{{ form.gitpuller_tag.id_for_label }}" class="form-label">
+                          <strong>{{ form.gitpuller_tag.label }}</strong>
+                          {% if form.gitpuller_tag.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {% if form.gitpuller_tag.help_text %}
+                          <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_tag.help_text }}</small>
+                        {% endif %}
+                        {{ form.gitpuller_tag }}
+                        {% if form.gitpuller_tag.errors %}
+                          <div class="invalid-feedback d-block">
+                            {% for error in form.gitpuller_tag.errors %}{{ error }}{% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Sync Directory -->
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label for="{{ form.gitpuller_sync_dir.id_for_label }}" class="form-label">
+                          <strong>{{ form.gitpuller_sync_dir.label }}</strong>
+                          {% if form.gitpuller_sync_dir.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {% if form.gitpuller_sync_dir.help_text %}
+                          <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_sync_dir.help_text }}</small>
+                        {% endif %}
+                        {{ form.gitpuller_sync_dir }}
+                        {% if form.gitpuller_sync_dir.errors %}
+                          <div class="invalid-feedback d-block">
+                            {% for error in form.gitpuller_sync_dir.errors %}{{ error }}{% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Information Section -->
+              <div class="mb-4">
+                <h3 class="h5 mb-3 text-primary">Additional Information</h3>
+
+                <!-- Configuration Comments (CourseConfigurationForm) -->
+                {% if form.configuration_comments %}
+                <div class="form-group mb-3">
+                  <label for="{{ form.configuration_comments.id_for_label }}" class="form-label">
+                    <strong>{{ form.configuration_comments.label }}</strong>
+                    {% if form.configuration_comments.field.required %}<span class="text-danger">*</span>{% endif %}
+                  </label>
+                  {% if form.configuration_comments.help_text %}
+                    <small class="form-text text-muted d-block mb-2">{{ form.configuration_comments.help_text }}</small>
+                  {% endif %}
+                  {{ form.configuration_comments }}
+                  {% if form.configuration_comments.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in form.configuration_comments.errors %}{{ error }}{% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </div>
               
               {% if form.non_field_errors %}
                 <div class="alert alert-danger" role="alert">

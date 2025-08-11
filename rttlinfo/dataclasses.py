@@ -391,10 +391,10 @@ class CourseStatus:
 
     STATUS_CHOICES = {
         'requested': 'Requested',
-        'provisioning': 'Provisioning',
-        'ready': 'Ready',
-        'error': 'Error',
-        'deleted': 'Deleted',
+        'blocked': 'Blocked',
+        'pending': 'Pending',
+        'deployed': 'Deployed',
+        'archived': 'Archived',
     }
 
     def __post_init__(self):
@@ -648,6 +648,7 @@ class CourseStatusUpdate:
     course_year: Optional[int] = None
     course_quarter: str = ""
     hub_url: str = ""
+    status_added_by: str = ""
 
     def to_api_data(self) -> Dict[str, Any]:
         """
@@ -662,7 +663,8 @@ class CourseStatusUpdate:
             'hub_deployed': self.hub_deployed,
             'message': self.message,
             'name': self.name,
-            'hub_url': self.hub_url
+            'hub_url': self.hub_url,
+            'status_added_by': self.status_added_by
         }
         if self.configuration:
             data['configuration'] = self.configuration.to_api_data()

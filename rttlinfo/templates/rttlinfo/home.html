@@ -164,13 +164,11 @@ function updateHubUI(hubData) {
     statusText.textContent = 'A JupyterHub has been requested for this course.';
   } else if (hubData.rttl_hub_exists) {
     statusText.textContent = 'JupyterHub information was found for this course - please see latest status below.';
-  } else if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
-    statusText.innerHTML = 'No JupyterHub has been requested for this course yet. You can <a href="{% url "hub-request" %}">request a JupyterHub</a> if you are eligible.';
   } else if (!IS_ELIGIBLE) {
     statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609">UW Connect</a>';
   } else {
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
-      statusText.textContent = 'No JupyterHub has been requested for this course yet.';
+      statusText.innerHTML = 'No JupyterHub has been requested for this course yet. You can <a href="{% url "hub-request" %}">request a JupyterHub</a> now.';
     } else {
       statusText.textContent = 'This course is not using JupyterHub. Please contact your instructor or TA for more information.';
     }
@@ -238,7 +236,7 @@ function generateActionButtons(hubData) {
     } else {
       buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }
-  } else if (IS_ELIGIBLE){
+  } else if (IS_ELIGIBLE) { //IS_ELIGIBLE) {
     // Hub does not exist and no request found, but is eligible to request
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
