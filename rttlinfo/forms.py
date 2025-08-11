@@ -46,58 +46,88 @@ class CourseConfigurationForm(forms.Form):
     """
 
     # Resource requests
-    cpu_request = forms.IntegerField(
+    cpu_request = forms.ChoiceField(
         label='CPU Request (cores)',
-        help_text='Number of CPU cores to request (e.g., 1, 2)',
+        help_text='Number of CPU cores requested for each user environment',
         required=False,
-        min_value=1,
-        max_value=4,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '1'
+        choices=[('1', '1 core'), ('2', '2 cores'), ('4', '4 cores')],
+        initial='1',
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input'
         })
     )
 
-    memory_request = forms.IntegerField(
+    memory_request = forms.ChoiceField(
         label='Memory Request (GB)',
-        help_text='Amount of memory to request in gigabytes',
+        help_text=(
+            'Amount of memory requested in gigabytes for each user environment'
+        ),
         required=False,
-        min_value=1,
-        max_value=4,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '2'
+        choices=[('2', '2 GB'), ('4', '4 GB')],
+        initial='2',
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input'
         })
     )
 
-    storage_request = forms.IntegerField(
+    storage_request = forms.ChoiceField(
         label='Storage Request (GB)',
-        help_text='Amount of storage to request in gigabytes',
+        help_text=('Amount of storage requested in gigabytes for each user\'s '
+                   'home directory'),
         required=False,
-        min_value=1,
-        max_value=20,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '10'
+        choices=[('5', '5 GB'), ('10', '10 GB')],
+        initial='5',
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input'
         })
     )
 
-    # Container image
-    image_uri = forms.CharField(
-        label='Container Image URI',
-        help_text='Docker image repository URI (e.g., jupyter/scipy-notebook)',
+    # Container image - changed to radio buttons
+    container_image = forms.ChoiceField(
+        label='Container Image',
+        help_text='Select the image to be used for your course',
+        required=False,
+        choices=[
+            ('scipy', 'SciPy - Scientific computing with Python [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/scipy" '
+             'target="_blank">Image details</a>]'),
+            ('datascience', 'Datascience - Data analysis and visualization [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/datascience" '
+             'target="_blank">Image details</a>]'),
+            ('tensorflow', 'TensorFlow - Machine learning and deep learning [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/tensorflow" '
+             'target="_blank">Image details</a>]'),
+            ('r', 'R - Statistical computing and graphics [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/r" '
+             'target="_blank">Image details</a>]'),
+            ('rstudio', 'RStudio Server (Open Source Edition) [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/rstudio" '
+             'target="_blank">Image details</a>]'),
+            ('custom', 'Custom image (instructor supported)'),
+        ],
+        initial='scipy',
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input'
+        })
+    )
+
+    # Custom image fields
+    custom_image_url = forms.CharField(
+        label='Image URL',
+        help_text='Docker image URL (e.g., jupyter/minimal-notebook)',
         required=False,
         max_length=500,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'jupyter/scipy-notebook'
+            'placeholder': 'jupyter/minimal-notebook'
         })
     )
 
-    image_tag = forms.CharField(
+    custom_image_tag = forms.CharField(
         label='Image Tag',
-        help_text='Docker image tag (e.g., latest, python-3.9)',
+        help_text='Image tag to use (e.g., latest, v1.0)',
         required=False,
+        empty_value='latest',
         max_length=100,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
@@ -105,24 +135,31 @@ class CourseConfigurationForm(forms.Form):
         })
     )
 
-    # Features
-    features_request = forms.CharField(
-        label='Requested Features',
-        help_text='Comma-separated list of features (e.g., '
-        'nfs, binderhub, oidcauth)',
+    # Features (NFS is the only one for now)
+    feature_nfs = forms.BooleanField(
+        label='NFS',
+        help_text='Network File System for shared storage in the Hub',
         required=False,
-        max_length=500,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'nfs, oidcauth'
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
+    )
+    # Let in as a stub for future use
+    feature_binderhub = forms.BooleanField(
+        label='BinderHub',
+        help_text='Enable BinderHub integration',
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
         })
     )
 
     # Gitpuller targets (simplified - single target for now)
     gitpuller_uri = forms.URLField(
-        label='Git Repository URI (Optional)',
+        label='Git Repository URI',
         help_text='URL of a git repository to automatically '
-        'clone for students',
+        'sync in each student\'s home directory. Please review the '
+        '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034611" target="_blank">best practices</a> for using gitpuller.',
         required=False,
         widget=forms.URLInput(attrs={
             'class': 'form-control',
@@ -131,8 +168,9 @@ class CourseConfigurationForm(forms.Form):
     )
 
     gitpuller_tag = forms.CharField(
-        label='Git Branch/Tag (Optional)',
-        help_text='Branch or tag to checkout',
+        label='Git Branch',
+        help_text='Branch to checkout',
+        empty_value='main',
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
@@ -142,26 +180,27 @@ class CourseConfigurationForm(forms.Form):
     )
 
     gitpuller_sync_dir = forms.CharField(
-        label='Sync Directory (Optional)',
-        help_text='Directory where the repository will be synced',
+        label='Sync Directory',
+        help_text='Directory where the repository will be synced in each user\'s home directory',
+        empty_value='COURSE_MATERIALS',
         required=False,
         max_length=200,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'course-materials'
+            'placeholder': 'COURSE_MATERIALS'  # Default sync directory
         })
     )
 
     # Comments
     configuration_comments = forms.CharField(
-        label='Additional Comments',
+        label='Comments',
         help_text='Any additional information or special requirements',
         required=False,
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'rows': 4,
             'placeholder': 'Please describe any special requirements or'
-            'preferences...'
+            ' preferences...'
         })
     )
 
@@ -171,44 +210,42 @@ class CourseConfigurationForm(forms.Form):
         """
         cleaned_data = super().clean()
 
-        # Validate gitpuller fields - if one is provided, others should be too
+        # Validate custom image fields if custom is selected
+        container_image = cleaned_data.get('container_image')
+        custom_image_url = cleaned_data.get('custom_image_url')
+        custom_image_tag = cleaned_data.get('custom_image_tag')
+
+        if container_image == 'custom':
+            if not custom_image_url:
+                raise ValidationError("Image URL is required when using a custom image.")
+            if not custom_image_tag:
+                raise ValidationError("Image Tag is required when using a custom image.")
+
+        # Validate gitpuller fields
         gitpuller_uri = cleaned_data.get('gitpuller_uri')
         gitpuller_tag = cleaned_data.get('gitpuller_tag')
         gitpuller_sync_dir = cleaned_data.get('gitpuller_sync_dir')
 
-        gitpuller_fields = [gitpuller_uri, gitpuller_tag, gitpuller_sync_dir]
-        provided_fields = [f for f in gitpuller_fields if f]
-
-        if provided_fields and len(provided_fields) != len(gitpuller_fields):
-            raise ValidationError(
-                "If you provide git repository information, please fill in"
-                "all three fields: URI, Branch/Tag, and Sync Directory."
-            )
+        if gitpuller_uri:
+            # If URI is provided, ensure we have tag and sync_dir
+            # Use defaults if they're empty
+            # Both have empty values set if the user did not provide them
+            if not gitpuller_tag:
+                cleaned_data['gitpuller_tag']
+            if not gitpuller_sync_dir:
+                cleaned_data['gitpuller_sync_dir']
 
         return cleaned_data
 
-    def clean_features_request(self):
+    def get_features_list(self):
         """
-        Validate and clean the features request field.
+        Convert checkbox selections to features list.
         """
-        features = self.cleaned_data.get('features_request', '')
-        if features:
-            # Clean up the comma-separated values
-            feature_list = [f.strip().lower() for
-                            f in features.split(',') if f.strip()]
-
-            # Validate known features (optional - you can expand this list)
-            valid_features = {'nfs', 'binderhub', 'nocanvas', 'oidcauth'}
-            invalid_features = [f for f in feature_list if
-                                f not in valid_features]
-
-            if invalid_features:
-                raise ValidationError(
-                    f"Unknown features: {', '.join(invalid_features)}. "
-                    f"Valid features are: {', '.join(sorted(valid_features))}"
-                )
-
-            return ', '.join(feature_list)
+        features = []
+        if self.cleaned_data.get('feature_nfs'):
+            features.append('nfs')
+        if self.cleaned_data.get('feature_binderhub'):
+            features.append('binderhub')
         return features
 
     def to_dataclass(self) -> CourseConfiguration:
@@ -225,20 +262,39 @@ class CourseConfigurationForm(forms.Form):
         if data.get('gitpuller_uri'):
             gitpuller_targets.append(GitpullerTarget(
                 gitpuller_uri=data['gitpuller_uri'],
-                gitpuller_tag=data['gitpuller_tag'] or 'main',
-                gitpuller_sync_dir=data['gitpuller_sync_dir'] or
-                'course-materials'
+                gitpuller_tag=data['gitpuller_tag'],
+                gitpuller_sync_dir=data['gitpuller_sync_dir']
             ))
 
+        # Handle container image - either predefined or custom
+        container_choice = data.get('container_image')
+        
+        if container_choice == 'custom':
+            image_uri = data.get('custom_image_url')
+            image_tag = data.get('custom_image_tag')
+        else:
+            # Map container image choices to actual image URIs
+            image_mapping = {
+                'scipy': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-scipy-notebook', '2.7.1'),
+                'datascience': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-datascience-notebook', '2.7.1'),
+                'tensorflow': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-tensorflow-notebook', '2.7.1'),
+                'r': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-r-notebook', '2.7.1'),
+                'rstudio': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-rstudio-notebook', '2.7.1'),
+            }
+            image_uri, image_tag = image_mapping.get(container_choice, image_mapping['scipy'])
+
+        # Get features from checkboxes
+        features_list = self.get_features_list()
+        features_request = ', '.join(features_list) if features_list else ''
+
         return CourseConfiguration(
-            # New configurations start as not applied
             configuration_applied=False,
-            cpu_request=data.get('cpu_request'),
-            memory_request=data.get('memory_request'),
-            storage_request=data.get('storage_request'),
-            image_uri=data.get('image_uri', ''),
-            image_tag=data.get('image_tag', ''),
-            features_request=data.get('features_request', ''),
+            cpu_request=int(data.get('cpu_request', '1')),
+            memory_request=int(data.get('memory_request', '2')),
+            storage_request=int(data.get('storage_request', '5')),
+            image_uri=image_uri,
+            image_tag=image_tag,
+            features_request=features_request,
             gitpuller_targets=gitpuller_targets,
             configuration_comments=data.get('configuration_comments', '')
         )
@@ -247,15 +303,36 @@ class CourseConfigurationForm(forms.Form):
         """
         Populate form fields from CourseConfiguration dataclass.
         """
+        # Map image URIs back to container choices
+        image_reverse_mapping = {
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-scipy-notebook': 'scipy',
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-datascience-notebook': 'datascience',
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-tensorflow-notebook': 'tensorflow',
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-r-notebook': 'r',
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-rstudio-notebook': 'rstudio',
+        }
+        
+        container_choice = image_reverse_mapping.get(config.image_uri, 'custom')
+
+        # Parse features string to set checkboxes
+        features_list = [f.strip().lower() for f in config.features_request.split(',') if f.strip()] if config.features_request else []
+
         self.initial = {
-            'cpu_request': config.cpu_request,
-            'memory_request': config.memory_request,
-            'storage_request': config.storage_request,
-            'image_uri': config.image_uri,
-            'image_tag': config.image_tag,
-            'features_request': config.features_request,
+            'cpu_request': str(config.cpu_request),
+            'memory_request': str(config.memory_request),
+            'storage_request': str(config.storage_request),
+            'container_image': container_choice,
+            'feature_nfs': 'nfs' in features_list,
+            'feature_binderhub': 'binderhub' in features_list,
             'configuration_comments': config.configuration_comments,
         }
+
+        # If it's a custom image, populate custom fields
+        if container_choice == 'custom':
+            self.initial.update({
+                'custom_image_url': config.image_uri,
+                'custom_image_tag': config.image_tag,
+            })
 
         # Handle first gitpuller target if exists
         if config.gitpuller_targets:
@@ -274,10 +351,10 @@ class CourseStatusForm(forms.Form):
 
     STATUS_CHOICES = [
         ('requested', 'Requested'),
-        ('provisioning', 'Provisioning'),
-        ('ready', 'Ready'),
-        ('error', 'Error'),
-        ('deleted', 'Deleted'),
+        ('blocked', 'Blocked'),
+        ('pending', 'Pending'),
+        ('deployed', 'Deployed'),
+        ('archived', 'Archived'),
     ]
 
     sis_course_id = forms.CharField(
@@ -298,7 +375,7 @@ class CourseStatusForm(forms.Form):
     )
 
     auto_create = forms.BooleanField(
-        label='Auto-create course if not exists',
+        label='Auto-create course if it does not exist',
         required=False,
         initial=True,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
@@ -355,112 +432,6 @@ class CourseStatusForm(forms.Form):
         required=False,
         widget=forms.URLInput(attrs={
             'class': 'form-control',
-            'placeholder': 'https://course.jupyter.uw.edu'
+            'placeholder': 'https://jupyter.rttl.uw.edu/course_sis_id'
         })
     )
-
-
-class HubRequestForm(forms.Form):
-    """
-    Combined form for requesting a new JupyterHub.
-    """
-
-    # Course information
-    course_name = forms.CharField(
-        label='Course Name',
-        help_text='Full name of your course',
-        max_length=200,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'e.g., Introduction to Data Science'
-        })
-    )
-
-    instructor_name = forms.CharField(
-        label='Instructor Name',
-        help_text='Primary instructor for this course',
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Your name'
-        })
-    )
-
-    instructor_email = forms.EmailField(
-        label='Instructor Email',
-        help_text='Contact email for hub-related communications',
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'instructor@uw.edu'
-        })
-    )
-
-    expected_students = forms.IntegerField(
-        label='Expected Number of Students',
-        help_text='Approximate number of students who will use the hub',
-        min_value=1,
-        max_value=500,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '25'
-        })
-    )
-
-    # Include configuration fields
-    cpu_request = forms.IntegerField(
-        label='CPU Request (cores)',
-        help_text='Number of CPU cores per student (1-2 recommended)',
-        required=False,
-        min_value=1,
-        max_value=4,
-        initial=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control'
-        })
-    )
-
-    memory_request = forms.IntegerField(
-        label='Memory Request (GB)',
-        help_text='Amount of memory per student in GB (2-8 recommended)',
-        required=False,
-        min_value=1,
-        max_value=4,
-        initial=2,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control'
-        })
-    )
-
-    storage_request = forms.IntegerField(
-        label='Storage Request (GB)',
-        help_text='Amount of storage per student in GB',
-        required=False,
-        min_value=1,
-        max_value=20,
-        initial=5,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control'
-        })
-    )
-
-    special_requirements = forms.CharField(
-        label='Special Requirements',
-        help_text='Any special software, packages, or configuration needs',
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 4,
-            'placeholder': 'Describe any special requirements, '
-            'software packages, or configurations needed for your course...'
-        })
-    )
-
-    def clean_instructor_email(self):
-        """
-        Validate that the email is a UW email (optional).
-        """
-        email = self.cleaned_data.get('instructor_email')
-        if email and not email.endswith('@uw.edu'):
-            # This is optional - you might want to allow other email domains
-            pass
-        return email

@@ -156,7 +156,7 @@ class RttlApiClient:
         """
         Handle API response and return JSON data.
         """
-        if response.status_code == 200:
+        if response.status_code in [200, 201]:  # Accept both OK and Created
             try:
                 return response.json()
             except ValueError as e:

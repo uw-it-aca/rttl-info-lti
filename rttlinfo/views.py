@@ -49,21 +49,42 @@ class LaunchView(BLTILaunchView):
 
     def get_context_data(self, **kwargs):
         _ = super().get_context_data(**kwargs)
-        # Return basic context without API call
-        # hub data will be loaded via AJAX
-        return {
-            'session_id': self.request.session.session_key,
-            'canvas_course_id': self.blti.canvas_course_id,
-            'course_sis_id': self.blti.course_sis_id,
-            'course_name': self.blti.course_short_name,
-            'course_long_name': self.blti.course_long_name,
-            'is_instructor': self.blti.is_instructor,
-            'is_ta': self.blti.is_teaching_assistant,
-            'is_student': self.blti.is_student,
-            'is_admin': self.blti.is_administrator,
-            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
-            'load_hub_data_async': True,  # Flag to trigger AJAX loading
-        }
+        
+        # Check if we have BLTI data (from LTI launch) or session data
+        # (from redirect)
+        if hasattr(self, 'blti') and self.blti:
+            # Direct LTI launch - use BLTI data
+            return {
+                'session_id': self.request.session.session_key,
+                'canvas_course_id': self.blti.canvas_course_id,
+                'course_sis_id': self.blti.course_sis_id,
+                'course_name': self.blti.course_short_name,
+                'course_long_name': self.blti.course_long_name,
+                'is_instructor': self.blti.is_instructor,
+                'is_ta': self.blti.is_teaching_assistant,
+                'is_student': self.blti.is_student,
+                'is_admin': self.blti.is_administrator,
+                'user_email': self.blti.user_email,
+                'is_eligible': get_course_eligibility(self.blti.course_sis_id),
+                'load_hub_data_async': True,  # Flag to trigger AJAX loading
+            }
+        else:
+            # Redirect or GET request - use session data
+            blti_data = self.request.session.get('blti_data', {})
+            return {
+                'session_id': self.request.session.session_key,
+                'canvas_course_id': blti_data.get('canvas_course_id', ''),
+                'course_sis_id': blti_data.get('course_sis_id', ''),
+                'course_name': blti_data.get('course_short_name', ''),
+                'course_long_name': blti_data.get('course_long_name', ''),
+                'is_instructor': blti_data.get('is_instructor', False),
+                'is_ta': blti_data.get('is_ta', False),
+                'is_student': blti_data.get('is_student', False),
+                'is_admin': blti_data.get('is_admin', False),
+                'user_email': blti_data.get('user_email', ''),
+                'is_eligible': blti_data.get('is_eligible', False),
+                'load_hub_data_async': True,  # Flag to trigger AJAX loading
+            }
 
 
 class HubDataApiView(TemplateView):
@@ -81,6 +102,7 @@ class HubDataApiView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         course_sis_id = request.GET.get('course_sis_id')
+        # import pdb; pdb.set_trace()  # Debugging breakpoint
 
         if course_sis_id in [None, 'None', '']:
             return JsonResponse(
@@ -100,6 +122,8 @@ class HubDataApiView(TemplateView):
             rttl_hub_status_message = None
 
             if rttl_data:
+                if 'latest_status' not in rttl_data[0] or not rttl_data[0]['latest_status']:
+                    raise Exception("No latest status found in RTTL data")
                 rttl_hub_exists = True
                 rttl_hub_url = rttl_data[0].get('hub_url')
                 rttl_hub_deployed = True if rttl_hub_url else False
@@ -166,7 +190,10 @@ class HubRequestView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         form = CourseConfigurationForm(request.POST)
+        logger.debug(f"Form submission received. POST data: {request.POST}")
+        
         if form.is_valid():
+            logger.debug("Form is valid, processing...")
             try:
                 # Get BLTI data from session
                 blti_data = request.session.get('blti_data', {})
@@ -192,7 +219,8 @@ class HubRequestView(TemplateView):
                     message=f"JupyterHub configuration requested via web form. Email <a href='mailto:help@uw.edu?subject={sis_course_id}'>help@uw.edu</a> if you need to make changes.",
                     configuration=config_dataclass,
                     # Populate course info from BLTI data if available
-                    name=blti_data.get('course_long_name', '')
+                    name=blti_data.get('course_long_name', ''),
+                    status_added_by=blti_data.get('user_email', '')
                 )
 
                 # Use RttlApiClient to submit the request
@@ -201,7 +229,7 @@ class HubRequestView(TemplateView):
                     status_update.to_api_data())
 
                 logger.info(f"API response: {response}")
-
+                
                 # Success message
                 messages.success(
                     request,
@@ -209,7 +237,7 @@ class HubRequestView(TemplateView):
                     'You will receive an email notification when '
                     'your hub is ready.'
                 )
-                return render(request, 'rttlinfo/home.html', blti_data)
+                return redirect('lti-launch')
 
             except RttlApiError as e:
                 logger.error(f"API error when creating course status: {e}")
@@ -230,8 +258,14 @@ class HubRequestView(TemplateView):
                                'An unexpected error occurred. Please try '
                                'again or contact support.')
 
+        else:
+            # Form is invalid - log the errors for debugging
+            logger.debug(f"Form is invalid. Errors: {form.errors}")
+            
         # If form is invalid or there was an error, re-render with form errors
-        return render(request, self.template_name, {'form': form})
+        context = self.get_context_data(**kwargs)
+        context['form'] = form
+        return render(request, self.template_name, context)
 
 
 class HubStatusApiView(TemplateView):
@@ -347,7 +381,8 @@ class HubUpdateConfigView(TemplateView):
                     auto_create=False,   # Course should already exist
                     hub_deployed=False,
                     message='Configuration updated via web form',
-                    configuration=config_dataclass
+                    configuration=config_dataclass,
+                    status_added_by=blti_data.get('user_email', '')
                 )
 
                 # Submit the update
