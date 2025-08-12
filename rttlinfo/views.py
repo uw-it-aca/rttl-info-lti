@@ -104,7 +104,7 @@ class HubDataApiView(TemplateView):
                     raise Exception("No latest status found in RTTL data")
                 rttl_hub_exists = True
                 rttl_hub_url = rttl_data[0].get('hub_url')
-                rttl_hub_deployed = True if rttl_hub_url else False
+                rttl_hub_deployed = rttl_data[0]['latest_status'].get('hub_deployed', False)
                 rttl_hub_status = rttl_data[0]['latest_status'].get('status')
                 rttl_hub_status_message = rttl_data[0]['latest_status'].get(
                     'message')
