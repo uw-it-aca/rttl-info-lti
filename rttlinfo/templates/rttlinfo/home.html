@@ -157,6 +157,7 @@ function updateHubUI(hubData) {
   const detailsCard = document.getElementById('hub-details-card');
   const actionsContainer = document.getElementById('hub-actions');
 
+  // console.log("Hub Data:", hubData);
   // Update status text
   if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
     statusText.textContent = 'A JupyterHub is available for this course. You can access it now!';
