@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from rttlinfo.api.clients.rttl_client import RttlApiClient
 import hashlib
+import html
 
 
 class RttlInfoRepository:
@@ -17,13 +18,17 @@ class RttlInfoRepository:
         return f"{prefix}_{hash_key}"
 
     def get_course_status(self, course_sis_id):
-        cache_key = self._safe_cache_key("course_status", course_sis_id)
+        # Decode HTML entities (e.g., &amp; -> &)
+        decoded_course_sis_id = html.unescape(course_sis_id)
+        
+        cache_key = self._safe_cache_key("course_status",
+                                         decoded_course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached
 
         # data = self.api_client.get_course_status(course_sis_id)
-        data = self.api_client.list_courses(course_sis_id)
+        data = self.api_client.list_courses(decoded_course_sis_id)
         # cache.set(cache_key, data, timeout=3600)
         # one hour may be too long, especially during development
         cache.set(cache_key, data, timeout=30)
