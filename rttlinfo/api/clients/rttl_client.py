@@ -68,7 +68,10 @@ class RttlApiClient:
             params: dict = None) -> str:
         """
         Generate cache key for request.
+        TODO: handle cache keys with space or ampersand characters
+        see: https://uw.test.instructure.com/courses/1851646
         """
+        # import pdb; pdb.set_trace()  # Debugging line to inspect variables
         key_data = f"{method}:{endpoint}"
         if params:
             key_data += f":{json.dumps(params, sort_keys=True)}"
@@ -188,9 +191,6 @@ class RttlApiClient:
             List of course dictionaries
         """
         params = {'sis_id': sis_id} if sis_id else {}
-
-        # Temp override for dev
-        # params = {"sis_id": '2025-spring-BANA-310-B'}
 
         response = self._make_request(
             'GET',
