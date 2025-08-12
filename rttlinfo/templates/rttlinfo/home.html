@@ -158,16 +158,21 @@ function updateHubUI(hubData) {
   const actionsContainer = document.getElementById('hub-actions');
 
   // console.log("Hub Data:", hubData);
-  // Update status text
+  // Hub states for status text display
   if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
+    // Hub data was found and 'rttl_hub_deployed' is true
     statusText.textContent = 'A JupyterHub is available for this course. You can access it now!';
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
+    // Hub data was found and 'rttl_hub_status' is 'requested' (ie, the initial state before approval)
     statusText.textContent = 'A JupyterHub has been requested for this course.';
   } else if (hubData.rttl_hub_exists) {
+    // Hub data was found but not yet deployed - display the latest status message
     statusText.textContent = 'JupyterHub information was found for this course - please see latest status below.';
   } else if (!IS_ELIGIBLE) {
+    // No hub data was found but the course is not eligible for a JupyterHub
     statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">UW Connect</a>';
   } else {
+    // No hub data was found and the course is eligible for a JupyterHub - options depend on user role
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       statusText.innerHTML = 'No JupyterHub has been requested for this course yet. You can <a href="{% url "hub-request" %}" target="_self">request a JupyterHub</a> now.';
     } else {
@@ -214,10 +219,11 @@ function updateHubUI(hubData) {
 function generateActionButtons(hubData) {
   let buttons = '';
 
+  // Hub states for button display
   if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
-    // Hub exists and is deployed
+    // Hub data was found and 'rttl_hub_deployed' is true show launch buttons
     buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>`;
-    
+    //Show admin button if user is eligible
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // Note: admins in the course are not guaranteed to have admin access to the hub, so this may be an area for future improvement
       // One option would be a get_admins endpoint in the RTTL API to query the hub and return a list of users with admin access
@@ -228,8 +234,11 @@ function generateActionButtons(hubData) {
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
     // Hub exists and is archived
     buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>';
-  } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'requested') {
-    // Hub request has been made and is pending
+  } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'blocked') {
+    // Hub data exists but is not approved
+    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub not available</button>';
+  } else if (hubData.rttl_hub_exists && ['requested', 'pending'].includes(hubData.rttl_hub_status)) {
+    // Hub request has been made and is requsted or pending
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // manage feature is not implemented yet
       // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
@@ -238,10 +247,11 @@ function generateActionButtons(hubData) {
       buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }
   } else if (IS_ELIGIBLE) {
-    // Hub does not exist and no request found, but is eligible to request
+    // Hub does not exist and no request found, but is eligible to request one
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
     } else {
+      // Note: we're gating student access to the tool at the infohub level, but students could still get here if the tool is installed in a course
       // Voting not implemented yet      
       // buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
     }
