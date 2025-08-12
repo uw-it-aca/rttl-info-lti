@@ -26,9 +26,9 @@ class LaunchView(BLTILaunchView):
         self.rttl_repository = RttlInfoRepository()
 
     def dispatch(self, request, *args, **kwargs):
-        logger.debug(f"Launching LTI with request: {request}")
-        request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
-        request.is_secure = lambda: True
+        # logger.debug(f"Launching LTI with request: {request}")
+        # request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
+        # request.is_secure = lambda: True
         # # DEV __ONLY__ ^^
         response = super().dispatch(request, *args, **kwargs)
         request.session['blti_data'] = {
