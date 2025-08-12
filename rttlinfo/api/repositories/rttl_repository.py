@@ -1,13 +1,23 @@
 from django.core.cache import cache
 from rttlinfo.api.clients.rttl_client import RttlApiClient
+import hashlib
 
 
 class RttlInfoRepository:
     def __init__(self, api_client=None):
         self.api_client = api_client or RttlApiClient()
 
+    def _safe_cache_key(self, prefix: str, identifier: str) -> str:
+        """
+        Generate a memcached-safe cache key.
+        Handles special characters in SIS IDs (spaces, ampersands, etc.)
+        """
+        # Use MD5 hash to ensure cache key is safe for memcached
+        hash_key = hashlib.md5(identifier.encode()).hexdigest()
+        return f"{prefix}_{hash_key}"
+
     def get_course_status(self, course_sis_id):
-        cache_key = f"course_status:{course_sis_id}"
+        cache_key = self._safe_cache_key("course_status", course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached
@@ -20,7 +30,7 @@ class RttlInfoRepository:
         return data
 
     def get_course_details(self, course_sis_id):
-        cache_key = f"course_details:{course_sis_id}"
+        cache_key = self._safe_cache_key("course_details", course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached
@@ -33,7 +43,7 @@ class RttlInfoRepository:
         return data
 
     def get_course_configs(self, course_sis_id):
-        cache_key = f"course_configs:{course_sis_id}"
+        cache_key = self._safe_cache_key("course_configs", course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached

@@ -68,11 +68,22 @@ class RttlApiClient:
             params: dict = None) -> str:
         """
         Generate cache key for request.
+        Handles special characters (spaces, ampersands) by using MD5 hash.
+        Ensures memcached compatibility by avoiding problematic characters.
         """
+        # Create a string representation of the request
         key_data = f"{method}:{endpoint}"
         if params:
             key_data += f":{json.dumps(params, sort_keys=True)}"
-        return f"rttl_api:{hashlib.md5(key_data.encode()).hexdigest()}"
+        
+        # Generate MD5 hash to handle special characters and ensure
+        # consistent key format that memcached can handle
+        hash_key = hashlib.md5(key_data.encode()).hexdigest()
+        
+        # Return a clean cache key with only alphanumeric and safe characters
+        # Use underscore instead of colon
+        # MD5 hash ensures key is exactly 32 chars + prefix, under 250 char limit
+        return f"rttl_api_{hash_key}"
 
     def _make_request(
             self,
@@ -188,9 +199,6 @@ class RttlApiClient:
             List of course dictionaries
         """
         params = {'sis_id': sis_id} if sis_id else {}
-
-        # Temp override for dev
-        # params = {"sis_id": '2025-spring-BANA-310-B'}
 
         response = self._make_request(
             'GET',

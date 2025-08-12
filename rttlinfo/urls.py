@@ -7,11 +7,13 @@ from .views import \
     LaunchView, \
     HubDataApiView, \
     HubRequestView, \
-    HubManageView
+    HubManageView, \
+    HomeView
 
 urlpatterns = [
     # LTI launch throws CSRF errors since it's a POST from external domain
     re_path(r'^$', csrf_exempt(LaunchView.as_view()), name='lti-launch'),
+    re_path(r'^home/$', HomeView.as_view(), name='home'),
     re_path(r'^api/hub-data/$', HubDataApiView.as_view(), name='hub-data-api'),
     re_path(r'^manage/$', HubManageView.as_view(), name="hub-manage"),
     re_path(r'^request/$', HubRequestView.as_view(), name="hub-request"),

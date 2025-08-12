@@ -26,10 +26,10 @@ class LaunchView(BLTILaunchView):
         self.rttl_repository = RttlInfoRepository()
 
     def dispatch(self, request, *args, **kwargs):
-        logger.debug(f"Launching LTI with request: {request}")
-        request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
-        request.is_secure = lambda: True
-        # DEV __ONLY__ ^^
+        # logger.debug(f"Launching LTI with request: {request}")
+        # request.META['HTTP_X_FORWARDED_PROTO'] = 'https'
+        # request.is_secure = lambda: True
+        # # DEV __ONLY__ ^^
         response = super().dispatch(request, *args, **kwargs)
         request.session['blti_data'] = {
             'canvas_course_id': self.blti.canvas_course_id,
@@ -49,42 +49,21 @@ class LaunchView(BLTILaunchView):
 
     def get_context_data(self, **kwargs):
         _ = super().get_context_data(**kwargs)
-        
-        # Check if we have BLTI data (from LTI launch) or session data
-        # (from redirect)
-        if hasattr(self, 'blti') and self.blti:
-            # Direct LTI launch - use BLTI data
-            return {
-                'session_id': self.request.session.session_key,
-                'canvas_course_id': self.blti.canvas_course_id,
-                'course_sis_id': self.blti.course_sis_id,
-                'course_name': self.blti.course_short_name,
-                'course_long_name': self.blti.course_long_name,
-                'is_instructor': self.blti.is_instructor,
-                'is_ta': self.blti.is_teaching_assistant,
-                'is_student': self.blti.is_student,
-                'is_admin': self.blti.is_administrator,
-                'user_email': self.blti.user_email,
-                'is_eligible': get_course_eligibility(self.blti.course_sis_id),
-                'load_hub_data_async': True,  # Flag to trigger AJAX loading
-            }
-        else:
-            # Redirect or GET request - use session data
-            blti_data = self.request.session.get('blti_data', {})
-            return {
-                'session_id': self.request.session.session_key,
-                'canvas_course_id': blti_data.get('canvas_course_id', ''),
-                'course_sis_id': blti_data.get('course_sis_id', ''),
-                'course_name': blti_data.get('course_short_name', ''),
-                'course_long_name': blti_data.get('course_long_name', ''),
-                'is_instructor': blti_data.get('is_instructor', False),
-                'is_ta': blti_data.get('is_ta', False),
-                'is_student': blti_data.get('is_student', False),
-                'is_admin': blti_data.get('is_admin', False),
-                'user_email': blti_data.get('user_email', ''),
-                'is_eligible': blti_data.get('is_eligible', False),
-                'load_hub_data_async': True,  # Flag to trigger AJAX loading
-            }
+
+        return {
+            'session_id': self.request.session.session_key,
+            'canvas_course_id': self.blti.canvas_course_id,
+            'course_sis_id': self.blti.course_sis_id,
+            'course_name': self.blti.course_short_name,
+            'course_long_name': self.blti.course_long_name,
+            'is_instructor': self.blti.is_instructor,
+            'is_ta': self.blti.is_teaching_assistant,
+            'is_student': self.blti.is_student,
+            'is_admin': self.blti.is_administrator,
+            'user_email': self.blti.user_email,
+            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
+            'load_hub_data_async': True,  # Flag to trigger AJAX loading
+        }
 
 
 class HubDataApiView(TemplateView):
@@ -102,7 +81,6 @@ class HubDataApiView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         course_sis_id = request.GET.get('course_sis_id')
-        # import pdb; pdb.set_trace()  # Debugging breakpoint
 
         if course_sis_id in [None, 'None', '']:
             return JsonResponse(
@@ -237,7 +215,7 @@ class HubRequestView(TemplateView):
                     'You will receive an email notification when '
                     'your hub is ready.'
                 )
-                return redirect('lti-launch')
+                return redirect('home')
 
             except RttlApiError as e:
                 logger.error(f"API error when creating course status: {e}")
@@ -405,3 +383,34 @@ class HubUpdateConfigView(TemplateView):
                 messages.error(request, 'An unexpected error occurred.')
 
         return render(request, self.template_name, {'form': form})
+
+
+class HomeView(TemplateView):
+    """
+    Simple home view that uses session data instead of LTI validation.
+    Used for redirects after form submissions.
+    """
+    template_name = 'rttlinfo/home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get BLTI data from session (stored during initial LTI launch)
+        blti_data = self.request.session.get('blti_data', {})
+        
+        # Return context similar to LaunchView but using session data
+        context.update({
+            'session_id': self.request.session.session_key,
+            'canvas_course_id': blti_data.get('canvas_course_id', ''),
+            'course_sis_id': blti_data.get('course_sis_id', ''),
+            'course_name': blti_data.get('course_short_name', ''),
+            'course_long_name': blti_data.get('course_long_name', ''),
+            'is_instructor': blti_data.get('is_instructor', False),
+            'is_ta': blti_data.get('is_ta', False),
+            'is_student': blti_data.get('is_student', False),
+            'is_admin': blti_data.get('is_admin', False),
+            'is_eligible': blti_data.get('is_eligible', False),
+            'load_hub_data_async': True,  # Flag to trigger AJAX loading
+        })
+        
+        return context
