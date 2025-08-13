@@ -501,6 +501,7 @@ class Course:
     last_changed: Optional[datetime] = None
     in_admin_courses: bool = False  # Read-only computed field
     latest_status: Optional[CourseStatus] = None  # Read-only computed field
+    hub_admins: Optional[List[str]] = None
 
     def get_quarter_display_name(self) -> str:
         """
@@ -529,7 +530,8 @@ class Course:
             hub_url=data['hub_url'],
             last_changed=parse_api_datetime(data.get('last_changed')),
             in_admin_courses=data.get('in_admin_courses', False),
-            latest_status=latest_status
+            latest_status=latest_status,
+            hub_admins=data.get('hub_admins')
         )
 
 
@@ -548,6 +550,7 @@ class CourseDetail:
     last_changed: Optional[datetime] = None
     in_admin_courses: bool = False  # Read-only computed field
     statuses: List[CourseStatus] = field(default_factory=list)  # Read-only
+    hub_admins: Optional[List[str]] = None
 
     def get_quarter_display_name(self) -> str:
         """
@@ -577,7 +580,8 @@ class CourseDetail:
             hub_url=data['hub_url'],
             last_changed=parse_api_datetime(data.get('last_changed')),
             in_admin_courses=data.get('in_admin_courses', False),
-            statuses=statuses
+            statuses=statuses,
+            hub_admins=data.get('hub_admins')
         )
 
 
@@ -649,6 +653,7 @@ class CourseStatusUpdate:
     course_quarter: str = ""
     hub_url: str = ""
     status_added_by: str = ""
+    hub_admins: Optional[List[str]] = None
 
     def to_api_data(self) -> Dict[str, Any]:
         """
@@ -664,7 +669,8 @@ class CourseStatusUpdate:
             'message': self.message,
             'name': self.name,
             'hub_url': self.hub_url,
-            'status_added_by': self.status_added_by
+            'status_added_by': self.status_added_by,
+            'hub_admins': self.hub_admins
         }
         if self.configuration:
             data['configuration'] = self.configuration.to_api_data()

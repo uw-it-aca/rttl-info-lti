@@ -191,6 +191,17 @@ class CourseConfigurationForm(forms.Form):
         })
     )
 
+    additional_admins = forms.CharField(
+        label='Additional Hub Admins',
+        help_text='Comma-separated list of UW NetIDs to add as additional Hub admins',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 1,
+            'placeholder': 'Enter UW NetIDs...'
+        })
+    )
+
     # Comments
     configuration_comments = forms.CharField(
         label='Comments',
@@ -247,6 +258,19 @@ class CourseConfigurationForm(forms.Form):
         if self.cleaned_data.get('feature_binderhub'):
             features.append('binderhub')
         return features
+
+    def get_hub_admins_list(self):
+        """
+        Convert additional_admins field to a list of admin NetIDs.
+        """
+        additional_admins = self.cleaned_data.get('additional_admins', '')
+        if not additional_admins:
+            return None
+        
+        # Split by comma and clean up whitespace
+        admins = [admin.strip() for admin in additional_admins.split(',')
+                  if admin.strip()]
+        return admins if admins else None
 
     def to_dataclass(self) -> CourseConfiguration:
         """
@@ -342,6 +366,15 @@ class CourseConfigurationForm(forms.Form):
                 'gitpuller_tag': first_target.gitpuller_tag,
                 'gitpuller_sync_dir': first_target.gitpuller_sync_dir,
             })
+
+    def set_hub_admins(self, hub_admins_list):
+        """
+        Set the hub admins field from a list of admin NetIDs.
+        """
+        if hub_admins_list:
+            self.initial['additional_admins'] = ', '.join(hub_admins_list)
+        else:
+            self.initial['additional_admins'] = ''
 
 
 class CourseStatusForm(forms.Form):
