@@ -104,6 +104,8 @@ const IS_INSTRUCTOR = {{ is_instructor|yesno:"true,false" }};
 const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
 const IS_TA = {{ is_ta|yesno:"true,false" }};
 const IS_ELIGIBLE = {{ is_eligible|yesno:"true,false" }};
+const USER_EMAIL = '{{ user_email }}';
+const USER_NETID = USER_EMAIL.split('@')[0];
 
 // Get CSRF token
 function getCSRFToken() {
@@ -227,7 +229,8 @@ function generateActionButtons(hubData) {
     // Hub data was found and 'rttl_hub_deployed' is true show launch buttons
     buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub in new window">Launch JupyterHub</a>`;
     //Show admin button if user is eligible
-    if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+    // if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
+    if (hubData.rttl_hub_admins && hubData.rttl_hub_admins.length > 0 && hubData.rttl_hub_admins.includes(USER_NETID)) {
       // Note: admins in the course are not guaranteed to have admin access to the hub, so this may be an area for future improvement
       // One option would be a get_admins endpoint in the RTTL API to query the hub and return a list of users with admin access
       buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub Admin interface in new window">Launch JupyterHub Admin interface</a>`;

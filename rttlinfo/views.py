@@ -98,6 +98,7 @@ class HubDataApiView(TemplateView):
             rttl_hub_deployed = False
             rttl_hub_status = None
             rttl_hub_status_message = None
+            rttl_hub_admins = None
 
             if rttl_data:
                 if 'latest_status' not in rttl_data[0] or not rttl_data[0]['latest_status']:
@@ -108,6 +109,7 @@ class HubDataApiView(TemplateView):
                 rttl_hub_status = rttl_data[0]['latest_status'].get('status')
                 rttl_hub_status_message = rttl_data[0]['latest_status'].get(
                     'message')
+                rttl_hub_admins = rttl_data[0].get('hub_admins', [])
 
             return JsonResponse({
                 'rttl_hub_exists': rttl_hub_exists,
@@ -115,6 +117,7 @@ class HubDataApiView(TemplateView):
                 'rttl_hub_deployed': rttl_hub_deployed,
                 'rttl_hub_status': rttl_hub_status,
                 'rttl_hub_status_message': rttl_hub_status_message,
+                'rttl_hub_admins': rttl_hub_admins,
             })
 
         except Exception as e:
@@ -188,6 +191,13 @@ class HubRequestView(TemplateView):
                 logger.info(f"Created configuration dataclass: \
                             {config_dataclass}")
 
+                # Get hub admins from form
+                hub_admins = form.get_hub_admins_list()
+
+                if blti_data.get('user_email'):
+                    # Add the requesting user email to the hub admins list
+                    hub_admins.append(blti_data['user_email'].split("@")[0])
+
                 # Create the status update payload
                 status_update = CourseStatusUpdate(
                     sis_course_id=sis_course_id,
@@ -198,7 +208,8 @@ class HubRequestView(TemplateView):
                     configuration=config_dataclass,
                     # Populate course info from BLTI data if available
                     name=blti_data.get('course_long_name', ''),
-                    status_added_by=blti_data.get('user_email', '')
+                    status_added_by=blti_data.get('user_email', ''),
+                    hub_admins=hub_admins
                 )
 
                 # Use RttlApiClient to submit the request
