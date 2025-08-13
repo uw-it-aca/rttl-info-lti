@@ -2,10 +2,26 @@
 
 {% load static %}
 
+<!-- Skip link for keyboard navigation -->
+<a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<style>
+  .sr-only-focusable:focus {
+    position: absolute;
+    left: 6px;
+    top: 7px;
+    z-index: 1000;
+    background: #fff;
+    padding: 6px 10px;
+    text-decoration: none;
+    border: 1px solid #ccc;
+  }
+</style>
+
 {% block content %}
 
 {% csrf_token %}
-<div class="canvas-rttlinfo-container">
+<div class="canvas-rttlinfo-container" id="main-content">
 
   <div class="container-fluid mt-4">
 
@@ -20,7 +36,7 @@
             Request a JupyterHub environment for your course. Once submitted, your request will be reviewed and you'll be notified when your JupyterHub is ready.
           </p>
           <div class="text-center">
-            <a class="btn btn-outline-secondary" href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">Learn more about JupyterHub</a>
+            <a class="btn btn-outline-secondary" href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank" aria-label="Learn more about JupyterHub (opens in new window)">Learn more about JupyterHub</a>
           </div>
         </div>
       </div>
@@ -48,12 +64,12 @@
                 <h3 class="h5 mb-3 text-primary">Resource Requirements</h3>
                 <small class="form-text text-muted d-block mb-2">Computational resources to be allocated for each user's instance.</small>
                 <!-- CPU Request (full width for radio buttons) -->
-                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
-                    <label class="form-label"><strong>{{ form.cpu_request.label }}</strong></label>
+                <fieldset class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <div class="form-label h6 mb-2" id="{{ form.cpu_request.id_for_label }}_legend"><strong>{{ form.cpu_request.label }}</strong></div>
                     {% if form.cpu_request.help_text %}
                         <small class="form-text text-muted">{{ form.cpu_request.help_text }}</small>
                     {% endif %}
-                  <div class="d-flex mb-2" style="gap: 2rem;">
+                  <div class="d-flex mb-2" style="gap: 2rem;" role="radiogroup" aria-labelledby="{{ form.cpu_request.id_for_label }}_legend">
                       {% for radio in form.cpu_request %}
                           <div class="form-check">
                               {{ radio.tag }}
@@ -64,20 +80,20 @@
                       {% endfor %}
                   </div>
                     {% if form.cpu_request.errors %}
-                        <div class="invalid-feedback d-block">
+                        <div class="invalid-feedback d-block" role="alert" id="{{ form.cpu_request.id_for_label }}_errors">
                           {% for error in form.cpu_request.errors %}
                             {{ error }}
                           {% endfor %}
                         </div>
                     {% endif %}
-                </div>
+                </fieldset>
                 <!-- Memory Request (full width for radio buttons) -->
-                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
-                    <label class="form-label"><strong>{{ form.memory_request.label }}</strong></label>
+                <fieldset class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <div class="form-label h6 mb-2" id="{{ form.memory_request.id_for_label }}_legend"><strong>{{ form.memory_request.label }}</strong></div>
                       {% if form.memory_request.help_text %}
                         <small class="form-text text-muted">{{ form.memory_request.help_text }}</small>
                     {% endif %}
-                  <div class="d-flex mb-2" style="gap: 2rem;">
+                  <div class="d-flex mb-2" style="gap: 2rem;" role="radiogroup" aria-labelledby="{{ form.memory_request.id_for_label }}_legend">
                       {% for radio in form.memory_request %}
                           <div class="form-check">
                               {{ radio.tag }}
@@ -88,20 +104,20 @@
                       {% endfor %}
                   </div>
                     {% if form.memory_request.errors %}
-                        <div class="invalid-feedback d-block">
+                        <div class="invalid-feedback d-block" role="alert" id="{{ form.memory_request.id_for_label }}_errors">
                           {% for error in form.memory_request.errors %}
                             {{ error }}
                           {% endfor %}
                         </div>
                     {% endif %}
-                </div>
+                </fieldset>
                 <!-- Storage Request (full width for radio buttons) -->
-                <div class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
-                    <label class="form-label"><strong>{{ form.storage_request.label }}</strong></label>
+                <fieldset class="form-group mb-3 border rounded p-3" style="background-color: #f8f9fa;">
+                    <div class="form-label h6 mb-2" id="{{ form.storage_request.id_for_label }}_legend"><strong>{{ form.storage_request.label }}</strong></div>
                     {% if form.storage_request.help_text %}
                         <small class="form-text text-muted">{{ form.storage_request.help_text }}</small>
                     {% endif %}
-                  <div class="d-flex mb-2" style="gap: 2rem;">
+                  <div class="d-flex mb-2" style="gap: 2rem;" role="radiogroup" aria-labelledby="{{ form.storage_request.id_for_label }}_legend">
                       {% for radio in form.storage_request %}
                           <div class="form-check">
                               {{ radio.tag }}
@@ -112,13 +128,13 @@
                       {% endfor %}
                   </div>
                     {% if form.storage_request.errors %}
-                        <div class="invalid-feedback d-block">
+                        <div class="invalid-feedback d-block" role="alert" id="{{ form.storage_request.id_for_label }}_errors">
                           {% for error in form.storage_request.errors %}
                             {{ error }}
                           {% endfor %}
                         </div>
                     {% endif %}
-                </div>
+                </fieldset>
               </div>
 
               <!-- Container Image Section -->
@@ -152,8 +168,8 @@
                   <div class="alert alert-info" role="alert">
                     <strong>Custom Image Requirements:</strong> 
                     Please ensure your custom image is compatible with JupyterHub. We recommend basing your image on one of our 
-                    <a href="https://github.com/uw-it-aca/rttl-notebooks" target="_blank">supported images</a>.
-                    <a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/index.html" target="_blank">Start here</a> 
+                    <a href="https://github.com/uw-it-aca/rttl-notebooks" target="_blank" aria-label="Supported images (opens in new window)">supported images</a>.
+                    <a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/index.html" target="_blank" aria-label="Jupyter Docker Stacks documentation (opens in new window)">Start here</a> 
                     for guidance and best practices around building custom images. Per UW-IT policy, instructors who choose the Custom 
                     Image option are responsible for all support, testing, troubleshooting, bug fixing, and updates; 
                     UW-IT cannot provide support outside of general cloud platform support. 
@@ -165,7 +181,7 @@
                       <div class="form-group mb-3">
                         <label for="{{ form.custom_image_url.id_for_label }}" class="form-label">
                           <strong>{{ form.custom_image_url.label }}</strong>
-                          <span class="text-danger">*</span>
+                          <span class="text-danger" aria-label="required">*</span>
                         </label>
                         {% if form.custom_image_url.help_text %}
                           <small class="form-text text-muted d-block mb-2">{{ form.custom_image_url.help_text }}</small>
@@ -184,7 +200,7 @@
                       <div class="form-group mb-3">
                         <label for="{{ form.custom_image_tag.id_for_label }}" class="form-label">
                           <strong>{{ form.custom_image_tag.label }}</strong>
-                          <span class="text-danger">*</span>
+                          <span class="text-danger" aria-label="required">*</span>
                         </label>
                         {% if form.custom_image_tag.help_text %}
                           <small class="form-text text-muted d-block mb-2">{{ form.custom_image_tag.help_text }}</small>
@@ -226,10 +242,12 @@
                   // Handle git repository section chevron rotation
                   $('#gitRepositorySection').on('show.bs.collapse', function () {
                     document.getElementById('gitRepoChevron').textContent = '▼';
+                    document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'true');
                   });
                   
                   $('#gitRepositorySection').on('hide.bs.collapse', function () {
                     document.getElementById('gitRepoChevron').textContent = '▶';
+                    document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'false');
                   });
                 });
               </script>
@@ -279,19 +297,19 @@
               <!-- Git Repository Section -->
               <div class="mb-4">
                 <h3 class="h5 mb-3 text-primary">
-                  <button class="btn btn-link p-0 text-primary text-decoration-none h5" type="button" data-toggle="collapse" data-target="#gitRepositorySection" aria-expanded="false" aria-controls="gitRepositorySection" style="font-size: inherit; font-weight: inherit;">
-                    <span id="gitRepoChevron">▶</span>
+                  <button class="btn btn-link p-0 text-primary text-decoration-none h5" type="button" data-toggle="collapse" data-target="#gitRepositorySection" aria-expanded="false" aria-controls="gitRepositorySection" style="font-size: inherit; font-weight: inherit;" id="git-repo-toggle">
+                    <span id="gitRepoChevron" aria-hidden="true">▶</span>
                     Git Repository (Optional)
                   </button>
                 </h3>
                 
                 <div class="collapse" id="gitRepositorySection">
                   <!-- Git Repository URI -->
-                  <div class="form-group mb-3">
-                    <label for="{{ form.gitpuller_uri.id_for_label }}" class="form-label">
-                      <strong>{{ form.gitpuller_uri.label }}</strong>
-                      {% if form.gitpuller_uri.field.required %}<span class="text-danger">*</span>{% endif %}
-                    </label>
+                  <div class="form-group mb-3">    
+                        <label for="{{ form.gitpuller_uri.id_for_label }}" class="form-label">
+                          <strong>{{ form.gitpuller_uri.label }}</strong>
+                          {% if form.gitpuller_uri.field.required %}<span class="text-danger" aria-label="required">*</span>{% endif %}
+                        </label>
                     {% if form.gitpuller_uri.help_text %}
                       <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_uri.help_text|safe }}</small>
                     {% endif %}
@@ -309,7 +327,7 @@
                       <div class="form-group mb-3">
                         <label for="{{ form.gitpuller_tag.id_for_label }}" class="form-label">
                           <strong>{{ form.gitpuller_tag.label }}</strong>
-                          {% if form.gitpuller_tag.field.required %}<span class="text-danger">*</span>{% endif %}
+                          {% if form.gitpuller_tag.field.required %}<span class="text-danger" aria-label="required">*</span>{% endif %}
                         </label>
                         {% if form.gitpuller_tag.help_text %}
                           <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_tag.help_text }}</small>
@@ -328,7 +346,7 @@
                       <div class="form-group mb-3">
                         <label for="{{ form.gitpuller_sync_dir.id_for_label }}" class="form-label">
                           <strong>{{ form.gitpuller_sync_dir.label }}</strong>
-                          {% if form.gitpuller_sync_dir.field.required %}<span class="text-danger">*</span>{% endif %}
+                          {% if form.gitpuller_sync_dir.field.required %}<span class="text-danger" aria-label="required">*</span>{% endif %}
                         </label>
                         {% if form.gitpuller_sync_dir.help_text %}
                           <small class="form-text text-muted d-block mb-2">{{ form.gitpuller_sync_dir.help_text }}</small>
@@ -354,7 +372,7 @@
                 <div class="form-group mb-3">
                   <label for="{{ form.configuration_comments.id_for_label }}" class="form-label">
                     <strong>{{ form.configuration_comments.label }}</strong>
-                    {% if form.configuration_comments.field.required %}<span class="text-danger">*</span>{% endif %}
+                    {% if form.configuration_comments.field.required %}<span class="text-danger" aria-label="required">*</span>{% endif %}
                   </label>
                   {% if form.configuration_comments.help_text %}
                     <small class="form-text text-muted d-block mb-2">{{ form.configuration_comments.help_text }}</small>
@@ -370,7 +388,7 @@
               </div>
               
               {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger" role="alert" aria-live="polite">
                   {% for error in form.non_field_errors %}
                     {{ error }}
                   {% endfor %}

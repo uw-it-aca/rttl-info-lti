@@ -4,8 +4,11 @@
 
 {% csrf_token %}
 
+<!-- Skip link for keyboard navigation -->
+<a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
+
 {% block content %}
-<div class="canvas-rttlinfo-container">
+<div class="canvas-rttlinfo-container" id="main-content">
 
   <div class="container-fluid mt-4">
 
@@ -34,42 +37,42 @@
           </div>
           <div class="card-body">
             <!-- Loading spinner - shown by default -->
-            <div id="hub-loading" class="text-center py-5">
-              <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+            <div id="hub-loading" class="text-center py-5" role="status" aria-live="polite" aria-label="Loading JupyterHub status">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;" aria-hidden="true">
                 <span class="sr-only">Loading...</span>
               </div>
-              <p class="lead">Fetching Hub data...</p>
+              <p class="lead" id="loading-text">Fetching Hub data...</p>
             </div>
 
             <!-- Error state - hidden by default -->
-            <div id="hub-error" class="alert alert-danger d-none" role="alert">
+            <div id="hub-error" class="alert alert-danger d-none" role="alert" aria-live="polite">
               <h4 class="alert-heading">Error Loading Hub Data</h4>
               <p>We were unable to load the JupyterHub status for this course. Please try refreshing the page.</p>
-              <button class="btn btn-outline-danger" onclick="loadHubData()">Retry</button>
+              <button class="btn btn-outline-danger" onclick="loadHubData()" aria-describedby="hub-error">Retry</button>
             </div>
 
             <!-- Main content - hidden by default, will be shown when data loads -->
-            <div id="hub-content" class="d-none">
+            <div id="hub-content" class="d-none" role="region" aria-live="polite" aria-label="JupyterHub status information">
               <div class="row">
                 <div class="col-md-8">
-                  <p class="lead" id="hub-status-text">
+                  <p class="lead" id="hub-status-text" role="status">
                     <!-- Status text will be populated by JavaScript -->
                   </p>
                   
                   <!-- Hub details card - will be shown/hidden by JavaScript -->
-                  <div class="card mb-3 d-none" id="hub-details-card">
+                  <div class="card mb-3 d-none" id="hub-details-card" role="region" aria-labelledby="hub-details-heading">
                     <div class="card-header">
-                      <h3 class="h5 mb-0">Hub Details</h3>
+                      <h3 class="h5 mb-0" id="hub-details-heading">Hub Details</h3>
                     </div>
                     <ul class="list-group list-group-flush">
                       <li class="list-group-item">
-                        <strong>Status:</strong> <span id="hub-status-value"></span>
+                        <strong>Status:</strong> <span id="hub-status-value" aria-label="Current hub status"></span>
                       </li>
                       <li class="list-group-item d-none" id="hub-message-item">
-                        <strong>Message:</strong> <span id="hub-message-value"></span>
+                        <strong>Message:</strong> <span id="hub-message-value" aria-label="Status message"></span>
                       </li>
                       <li class="list-group-item d-none" id="hub-url-item">
-                        <strong>URL:</strong> <a href="#" target="_blank" class="d-inline-block" id="hub-url-link"></a>
+                        <strong>URL:</strong> <a href="#" target="_blank" class="d-inline-block" id="hub-url-link" aria-label="JupyterHub URL"></a>
                       </li>
                     </ul>
                   </div>
@@ -77,9 +80,9 @@
                 <div class="col-md-4">
                   <div class="card">
                     <div class="card-header">
-                      <h3 class="h5 mb-0">Actions</h3>
+                      <h3 class="h5 mb-0" id="actions-heading">Actions</h3>
                     </div>
-                    <div class="card-body" id="hub-actions">
+                    <div class="card-body" id="hub-actions" role="region" aria-labelledby="actions-heading">
                       <!-- Action buttons will be populated by JavaScript -->
                     </div>
                   </div>
@@ -222,12 +225,12 @@ function generateActionButtons(hubData) {
   // Hub states for button display
   if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
     // Hub data was found and 'rttl_hub_deployed' is true show launch buttons
-    buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub</a>`;
+    buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub in new window">Launch JupyterHub</a>`;
     //Show admin button if user is eligible
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // Note: admins in the course are not guaranteed to have admin access to the hub, so this may be an area for future improvement
       // One option would be a get_admins endpoint in the RTTL API to query the hub and return a list of users with admin access
-      buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank">Launch JupyterHub Admin interface</a>`;
+      buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub Admin interface in new window">Launch JupyterHub Admin interface</a>`;
       // manage feature is not implemented yet
       // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
     }
@@ -261,7 +264,7 @@ function generateActionButtons(hubData) {
   }
 
   // Always show documentation link
-  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank">View Documentation</a>';
+  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank" aria-label="View documentation in new window">View Documentation</a>';
 
   return buttons;
 }
