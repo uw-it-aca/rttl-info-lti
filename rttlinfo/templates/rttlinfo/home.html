@@ -236,18 +236,22 @@ function generateActionButtons(hubData) {
     }
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
     // Hub exists and is archived
-    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>';
+    // Don't show buttons that are not actionable
+    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>';
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'blocked') {
     // Hub data exists but is not approved
-    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub not available</button>';
+    // Don't show buttons that are not actionable
+    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub not available</button>';
   } else if (hubData.rttl_hub_exists && ['requested', 'pending'].includes(hubData.rttl_hub_status)) {
     // Hub request has been made and is requsted or pending
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // manage feature is not implemented yet
+      // Don't show buttons that are not actionable
       // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
-      buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
+      // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     } else {
-      buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
+      // Don't show buttons that are not actionable
+      // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
     }
   } else if (IS_ELIGIBLE) {
     // Hub does not exist and no request found, but is eligible to request one
@@ -260,11 +264,12 @@ function generateActionButtons(hubData) {
     }
   } else {
     // Hub does not exist and no request found, and is not eligible to request a new hub
-    buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Course is not eligible for a JupyterHub</button>';
+    // Don't show buttons that are not actionable
+    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Course is not eligible for a JupyterHub</button>';
   }
 
   // Always show documentation link
-  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-secondary btn-block" target="_blank" aria-label="View documentation in new window">View Documentation</a>';
+  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-primary btn-block" target="_blank" aria-label="View documentation in new window">View Documentation</a>';
 
   return buttons;
 }
