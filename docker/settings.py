@@ -37,6 +37,7 @@ else:
     DEBUG = False
 
 RTTL_API_KEY = os.getenv('RTTL_API_KEY', '')
+RTTL_BASE_URL = os.getenv('RTTL_BASE_URL')
 RESTCLIENTS_SWS_OAUTH_BEARER = os.getenv('RESTCLIENTS_SWS_OAUTH_BEARER', '')
 RESTCLIENTS_CA_BUNDLE = os.getenv("RESTCLIENTS_CA_BUNDLE", "/etc/ssl/certs/ca-certificates.crt")
 RESTCLIENTS_SWS_DAO_CLASS = os.getenv('RESTCLIENTS_SWS_DAO_CLASS')
