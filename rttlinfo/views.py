@@ -192,7 +192,7 @@ class HubRequestView(TemplateView):
                             {config_dataclass}")
 
                 # Get hub admins from form
-                hub_admins = form.get_hub_admins_list()
+                hub_admins = form.get_hub_admins_list() or []
 
                 if blti_data.get('user_email'):
                     # Add the requesting user email to the hub admins list
