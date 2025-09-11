@@ -387,6 +387,7 @@ class CourseStatus:
     configuration: Optional[CourseConfiguration] = None
     status_added: Optional[datetime] = None
     status_added_by: str = ""
+    status_added_by_full_name: str = ""
     course: int = 0  # Course ID reference
 
     STATUS_CHOICES = {
@@ -435,6 +436,8 @@ class CourseStatus:
             configuration=configuration,
             status_added=parse_api_datetime(data.get('status_added')),
             status_added_by=data.get('status_added_by', ''),
+            status_added_by_full_name=data.get(
+                'status_added_by_full_name', ''),
             course=data.get('course', 0)
         )
 
@@ -453,6 +456,7 @@ class CourseStatusDetail:
     configuration: Optional[CourseConfiguration] = None
     status_added: Optional[datetime] = None
     status_added_by: str = ""
+    status_added_by_full_name: str = ""
 
     def __str__(self):
         return f"Course {self.course} - {self.status} ({self.status_added})"
@@ -475,7 +479,9 @@ class CourseStatusDetail:
             message=data.get('message', ''),
             configuration=configuration,
             status_added=parse_api_datetime(data.get('status_added')),
-            status_added_by=data.get('status_added_by', '')
+            status_added_by=data.get('status_added_by', ''),
+            status_added_by_full_name=data.get(
+                'status_added_by_full_name', '')
         )
 
 
@@ -653,6 +659,7 @@ class CourseStatusUpdate:
     course_quarter: str = ""
     hub_url: str = ""
     status_added_by: str = ""
+    status_added_by_full_name: str = ""
     hub_admins: Optional[List[str]] = None
 
     def to_api_data(self) -> Dict[str, Any]:
@@ -670,6 +677,7 @@ class CourseStatusUpdate:
             'name': self.name,
             'hub_url': self.hub_url,
             'status_added_by': self.status_added_by,
+            'status_added_by_full_name': self.status_added_by_full_name,
             'hub_admins': self.hub_admins
         }
         if self.configuration:
