@@ -2,6 +2,7 @@ from django.core.cache import cache
 from rttlinfo.api.clients.rttl_client import RttlApiClient
 import hashlib
 import html
+from urllib.parse import unquote_plus
 
 
 class RttlInfoRepository:
@@ -18,8 +19,12 @@ class RttlInfoRepository:
         return f"{prefix}_{hash_key}"
 
     def get_course_status(self, course_sis_id):
-        # Decode HTML entities (e.g., &amp; -> &)
-        decoded_course_sis_id = html.unescape(course_sis_id)
+        if course_sis_id in [None, '', 'None', 'none']:
+            raise ValueError("Invalid course_sis_id provided.")
+        # First decode URL encoding (handles both %20 and + for spaces)
+        url_decoded_sis_id = unquote_plus(course_sis_id)
+        # Then decode HTML entities (e.g., &amp; -> &)
+        decoded_course_sis_id = html.unescape(url_decoded_sis_id)
         
         cache_key = self._safe_cache_key("course_status",
                                          decoded_course_sis_id)
@@ -35,7 +40,14 @@ class RttlInfoRepository:
         return data
 
     def get_course_details(self, course_sis_id):
-        cache_key = self._safe_cache_key("course_details", course_sis_id)
+        if course_sis_id in [None, '', 'None', 'none']:
+            raise ValueError("Invalid course_sis_id provided.")
+        # Apply the same decoding as in get_course_status for consistency
+        url_decoded_sis_id = unquote_plus(course_sis_id)
+        decoded_course_sis_id = html.unescape(url_decoded_sis_id)
+
+        cache_key = self._safe_cache_key("course_details",
+                                         decoded_course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached
@@ -48,7 +60,14 @@ class RttlInfoRepository:
         return data
 
     def get_course_configs(self, course_sis_id):
-        cache_key = self._safe_cache_key("course_configs", course_sis_id)
+        if course_sis_id in [None, '', 'None', 'none']:
+            raise ValueError("Invalid course_sis_id provided.")
+        # Apply the same decoding as in get_course_status for consistency
+        url_decoded_sis_id = unquote_plus(course_sis_id)
+        decoded_course_sis_id = html.unescape(url_decoded_sis_id)
+
+        cache_key = self._safe_cache_key("course_configs",
+                                         decoded_course_sis_id)
         cached = cache.get(cache_key)
         if cached:
             return cached
