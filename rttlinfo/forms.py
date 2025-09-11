@@ -266,10 +266,10 @@ class CourseConfigurationForm(forms.Form):
         additional_admins = self.cleaned_data.get('additional_admins', '')
         if not additional_admins:
             return None
-        
-        # Split by comma and clean up whitespace
-        admins = [admin.strip() for admin in additional_admins.split(',')
-                  if admin.strip()]
+
+        # Split by comma and clean up whitespace also ensure no email addresses
+        admins = [admin.strip().split('@')[0] for admin in
+                  additional_admins.split(',') if admin.strip()]
         return admins if admins else None
 
     def to_dataclass(self) -> CourseConfiguration:

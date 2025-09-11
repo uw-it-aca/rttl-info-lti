@@ -42,6 +42,7 @@ class LaunchView(BLTILaunchView):
             'is_student': self.blti.is_student,
             'is_admin': self.blti.is_administrator,
             'user_email': self.blti.user_email,
+            'user_full_name': self.blti.user_full_name,
             'is_eligible': get_course_eligibility(self.blti.course_sis_id),
         }
 
@@ -61,6 +62,7 @@ class LaunchView(BLTILaunchView):
             'is_student': self.blti.is_student,
             'is_admin': self.blti.is_administrator,
             'user_email': self.blti.user_email,
+            'user_full_name': self.blti.user_full_name,
             'is_eligible': get_course_eligibility(self.blti.course_sis_id),
             'load_hub_data_async': True,  # Flag to trigger AJAX loading
         }
@@ -209,8 +211,12 @@ class HubRequestView(TemplateView):
                     # Populate course info from BLTI data if available
                     name=blti_data.get('course_long_name', ''),
                     status_added_by=blti_data.get('user_email', ''),
-                    hub_admins=hub_admins
+                    status_added_by_full_name=blti_data.get('user_full_name',
+                                                            ''),
                 )
+                if hub_admins:
+                    # Only set if there are any admins provided
+                    status_update.hub_admins = hub_admins
 
                 # Use RttlApiClient to submit the request
                 client = get_rttl_client()
@@ -371,7 +377,9 @@ class HubUpdateConfigView(TemplateView):
                     hub_deployed=False,
                     message='Configuration updated via web form',
                     configuration=config_dataclass,
-                    status_added_by=blti_data.get('user_email', '')
+                    status_added_by=blti_data.get('user_email', ''),
+                    status_added_by_full_name=blti_data.get('user_full_name',
+                                                            '')
                 )
 
                 # Submit the update
