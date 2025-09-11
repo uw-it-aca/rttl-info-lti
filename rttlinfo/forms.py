@@ -103,6 +103,9 @@ class CourseConfigurationForm(forms.Form):
             ('rstudio', 'RStudio Server (Open Source Edition) [<a href='
              '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/rstudio" '
              'target="_blank">Image details</a>]'),
+            ('rstudio-ai', 'RStudio Server with AI integrations enabled [<a href='
+             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/ai" '
+             'target="_blank">Image details</a>]'),
             ('custom', 'Custom image (instructor supported)'),
         ],
         initial='scipy',
@@ -304,6 +307,7 @@ class CourseConfigurationForm(forms.Form):
                 'tensorflow': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-tensorflow-notebook', '2.7.1'),
                 'r': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-r-notebook', '2.7.1'),
                 'rstudio': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-rstudio-notebook', '2.7.1'),
+                'rstudio-ai': ('us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-ai-notebook', '2.7.0'),
             }
             image_uri, image_tag = image_mapping.get(container_choice, image_mapping['scipy'])
 
@@ -334,8 +338,9 @@ class CourseConfigurationForm(forms.Form):
             'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-tensorflow-notebook': 'tensorflow',
             'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-r-notebook': 'r',
             'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-rstudio-notebook': 'rstudio',
+            'us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/jupyter-ai-notebook': 'rstudio-ai',
         }
-        
+
         container_choice = image_reverse_mapping.get(config.image_uri, 'custom')
 
         # Parse features string to set checkboxes
