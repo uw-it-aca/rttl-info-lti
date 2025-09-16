@@ -1,5 +1,5 @@
 DOCKER_REPO?=us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/rttlinfo-lti
-DOCKER_TAG?=0.0.24
+DOCKER_TAG?=0.0.25
 
 docker-build:
 	docker build -f ./Dockerfile --no-cache -t $(DOCKER_REPO):latest -t $(DOCKER_REPO):$(DOCKER_TAG) .
