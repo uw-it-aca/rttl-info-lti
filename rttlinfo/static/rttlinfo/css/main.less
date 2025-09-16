@@ -127,3 +127,29 @@
     opacity: 0.65;
   }
 }
+
+// Bootstrap 5 form compatibility - form-group is deprecated
+.form-group {
+  margin-bottom: 1rem;
+}
+
+// Ensure proper form validation styles work
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.was-validated .form-control:valid,
+.form-control.is-valid {
+  border-color: #198754;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 1.38-1.38c.394-.394.62-.62 1.15-.62s.756.226 1.15.62l.05.05c.394.394.62.62.62 1.15s-.226.756-.62 1.15l-2.05 2.05-.05.05c-.394.394-.62.62-1.15.62s-.756-.226-1.15-.62l-.05-.05c-.394-.394-.62-.62-.62-1.15s.226-.756.62-1.15l.05-.05z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
