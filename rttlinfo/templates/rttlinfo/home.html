@@ -5,7 +5,7 @@
 {% csrf_token %}
 
 <!-- Skip link for keyboard navigation -->
-<a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
+<a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
 
 {% block content %}
 <div class="canvas-rttlinfo-container" id="main-content">
@@ -39,7 +39,7 @@
             <!-- Loading spinner - shown by default -->
             <div id="hub-loading" class="text-center py-5" role="status" aria-live="polite" aria-label="Loading JupyterHub status">
               <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;" aria-hidden="true">
-                <span class="sr-only">Loading...</span>
+                <span class="visually-hidden">Loading...</span>
               </div>
               <p class="lead" id="loading-text">Fetching Hub data...</p>
             </div>
@@ -227,51 +227,51 @@ function generateActionButtons(hubData) {
   // Hub states for button display
   if (hubData.rttl_hub_exists && hubData.rttl_hub_deployed) {
     // Hub data was found and 'rttl_hub_deployed' is true show launch buttons
-    buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub in new window">Launch JupyterHub</a>`;
+    buttons += `<a href="${hubData.rttl_hub_url}" class="btn btn-primary w-100 mb-2" target="_blank" aria-label="Launch JupyterHub in new window">Launch JupyterHub</a>`;
     //Show admin button if user is in hub_admins list
     if (hubData.rttl_hub_admins && hubData.rttl_hub_admins.length > 0 && hubData.rttl_hub_admins.includes(USER_NETID)) {
-      buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary btn-block mb-2" target="_blank" aria-label="Launch JupyterHub Admin interface in new window">Launch JupyterHub Admin interface</a>`;
+      buttons += `<a href="${hubData.rttl_hub_url}/hub/admin" class="btn btn-primary w-100 mb-2" target="_blank" aria-label="Launch JupyterHub Admin interface in new window">Launch JupyterHub Admin interface</a>`;
     }
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // manage feature is not implemented yet
-      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
+      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary w-100 mb-2" target="_self">Manage Hub Request</a>`;
     }
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'archived') {
     // Hub exists and is archived
     // Don't show buttons that are not actionable
-    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub has been archived</button>';
+    // buttons += '<button class="btn btn-secondary w-100 mb-2" disabled>Hub has been archived</button>';
   } else if (hubData.rttl_hub_exists && hubData.rttl_hub_status === 'blocked') {
     // Hub data exists but is not approved
     // Don't show buttons that are not actionable
-    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Hub not available</button>';
+    // buttons += '<button class="btn btn-secondary w-100 mb-2" disabled>Hub not available</button>';
   } else if (hubData.rttl_hub_exists && ['requested', 'pending'].includes(hubData.rttl_hub_status)) {
     // Hub request has been made and is requsted or pending
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
       // manage feature is not implemented yet
       // Don't show buttons that are not actionable
-      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Manage Hub Request</a>`;
-      // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
+      // buttons += `<a href="{% url 'hub-manage' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary w-100 mb-2" target="_self">Manage Hub Request</a>`;
+      // buttons += '<button class="btn btn-secondary w-100 mb-2" disabled>Request Pending</button>';
     } else {
       // Don't show buttons that are not actionable
-      // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Request Pending</button>';
+      // buttons += '<button class="btn btn-secondary w-100 mb-2" disabled>Request Pending</button>';
     }
   } else if (IS_ELIGIBLE) {
     // Hub does not exist and no request found, but is eligible to request one
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
-      buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary btn-block mb-2" target="_self">Request a JupyterHub</a>`;
+      buttons += `<a href="{% url 'hub-request' %}" class="btn btn-primary w-100 mb-2" target="_self">Request a JupyterHub</a>`;
     } else {
       // Note: we're gating student access to the tool at the infohub level, but students could still get here if the tool is installed in a course
       // Voting not implemented yet      
-      // buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary btn-block mb-2" target="_self">Vote for a JupyterHub</a>`;
+      // buttons += `<a href="{% url 'hub-request' %}?course_sis_id=${COURSE_SIS_ID}" class="btn btn-primary w-100 mb-2" target="_self">Vote for a JupyterHub</a>`;
     }
   } else {
     // Hub does not exist and no request found, and is not eligible to request a new hub
     // Don't show buttons that are not actionable
-    // buttons += '<button class="btn btn-secondary btn-block mb-2" disabled>Course is not eligible for a JupyterHub</button>';
+    // buttons += '<button class="btn btn-secondary w-100 mb-2" disabled>Course is not eligible for a JupyterHub</button>';
   }
 
   // Always show documentation link
-  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-primary btn-block" target="_blank" aria-label="View documentation in new window">View Documentation</a>';
+  buttons += '<a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" class="btn btn-outline-primary w-100" target="_blank" aria-label="View documentation in new window">View Documentation</a>';
 
   return buttons;
 }

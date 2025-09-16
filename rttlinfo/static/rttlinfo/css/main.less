@@ -2,7 +2,7 @@
   //color: #4d66ca !important;
 //}
 
-.h5 { color: #85754d; }
+// .h5 { color: #85754d; }
 
 /* uw purple utilities */
 .bg-purple { background-color: #4b2e83 !important; }
@@ -51,5 +51,47 @@
     background-color: darken(@uw-gold, 12%) !important;
     border-color: darken(@uw-gold, 15%) !important;
     color: #333 !important;
+  }
+}
+
+// Bootstrap 5 compatibility fixes
+// Fix for loading spinner - hide the text inside spinner
+.spinner-border .visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+// Fallback for legacy sr-only classes
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+// Fix for btn-block replacement in Bootstrap 5
+.btn-block {
+  width: 100%;
+  display: block;
+}
+
+// Ensure proper spacing for action buttons
+#hub-actions .btn {
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
   }
 }
