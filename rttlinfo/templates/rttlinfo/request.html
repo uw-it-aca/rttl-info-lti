@@ -240,15 +240,18 @@
                   toggleCustomFields();
 
                   // Handle git repository section chevron rotation
-                  $('#gitRepositorySection').on('show.bs.collapse', function () {
-                    document.getElementById('gitRepoChevron').textContent = '▼';
-                    document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'true');
-                  });
-                  
-                  $('#gitRepositorySection').on('hide.bs.collapse', function () {
-                    document.getElementById('gitRepoChevron').textContent = '▶';
-                    document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'false');
-                  });
+                  const gitRepositorySection = document.getElementById('gitRepositorySection');
+                  if (gitRepositorySection) {
+                    gitRepositorySection.addEventListener('show.bs.collapse', function () {
+                      document.getElementById('gitRepoChevron').textContent = '▼';
+                      document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'true');
+                    });
+                    
+                    gitRepositorySection.addEventListener('hide.bs.collapse', function () {
+                      document.getElementById('gitRepoChevron').textContent = '▶';
+                      document.getElementById('git-repo-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                  }
                 });
               </script>
 
@@ -297,7 +300,7 @@
               <!-- Git Repository Section -->
               <div class="mb-4">
                 <h3 class="h5 mb-3 text-primary">
-                  <button class="btn btn-link p-0 text-primary text-decoration-none h5" type="button" data-toggle="collapse" data-target="#gitRepositorySection" aria-expanded="false" aria-controls="gitRepositorySection" style="font-size: inherit; font-weight: inherit;" id="git-repo-toggle">
+                  <button class="btn btn-link p-0 text-primary text-decoration-none h5" type="button" data-bs-toggle="collapse" data-bs-target="#gitRepositorySection" aria-expanded="false" aria-controls="gitRepositorySection" style="font-size: inherit; font-weight: inherit;" id="git-repo-toggle">
                     <span id="gitRepoChevron" aria-hidden="true">▶</span>
                     Git Repository (Optional)
                   </button>
