@@ -206,7 +206,7 @@ class HubRequestView(TemplateView):
                     status='requested',
                     auto_create=True,
                     hub_deployed=False,
-                    message=f"JupyterHub configuration requested via web form. Email <a href='mailto:help@uw.edu?subject={sis_course_id}'>help@uw.edu</a> if you need to make changes.",
+                    message=f"JupyterHub configuration requested via web form. Please allow up to two business days for approval. Email <a href='mailto:help@uw.edu?subject={sis_course_id}'>help@uw.edu</a> if you need to make changes.",
                     configuration=config_dataclass,
                     # Populate course info from BLTI data if available
                     name=blti_data.get('course_long_name', ''),
