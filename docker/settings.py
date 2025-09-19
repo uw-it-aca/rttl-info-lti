@@ -7,7 +7,11 @@ INSTALLED_APPS += [
 ]
 
 COMPRESS_ENABLED = True
-COMPRESS_ROOT = '/static/'
+# Override the base container's STATIC_ROOT to match where files are collected
+STATIC_ROOT = '/static'
+STATIC_URL = '/rttlinfo/static/'
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_URL = STATIC_URL
 COMPRESS_PRECOMPILERS = (('text/less', 'lessc {infile} {outfile}'),)
 COMPRESS_OFFLINE = True
 STATICFILES_FINDERS += ('compressor.finders.CompressorFinder',)
