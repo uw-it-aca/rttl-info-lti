@@ -11,8 +11,14 @@ COPY --chown=acait:acait docker/locations.conf /etc/nginx/includes/locations.con
 
 RUN /app/bin/pip install -r requirements.txt
 
-RUN . /app/bin/activate && pip install nodeenv && nodeenv -p &&\
-    npm install -g npm && ./bin/npm install -g less
+# Force npm to update internal dependencies and resolve tar version
+# Also delete bundled versions and let npm resolve to the new version of tar
+# to avoid security vulnerabilities described in CVE-2026-26960
+RUN . /app/bin/activate && pip install nodeenv && nodeenv -p && \
+    npm install -g npm@latest && npm update -g && npm install -g tar@7.5.8 --force && \
+    ./bin/npm install -g less && \
+    rm -rf /app/src && \
+    rm -rf /app/lib/node_modules/npm/node_modules/tar
 
 # Clear any existing compressed cache and regenerate static files
 RUN rm -rf /app/staticfiles/CACHE
