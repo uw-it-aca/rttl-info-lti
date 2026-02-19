@@ -46,7 +46,7 @@ jobs:
           tags: rttlinfo-lti:scan
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.34.0
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: 'rttlinfo-lti:scan'
           severity: 'HIGH,CRITICAL'
