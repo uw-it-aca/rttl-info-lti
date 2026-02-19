@@ -15,7 +15,7 @@ RUN /app/bin/pip install -r requirements.txt
 # Also delete bundled versions and let npm resolve to the new version of tar
 # to avoid security vulnerabilities described in CVE-2026-26960
 RUN . /app/bin/activate && pip install nodeenv && nodeenv -p && \
-    npm install -g npm@latest && npm update -g && npm install -g tar@7.5.8 --force && \
+    npm install -g npm@11.10.0 && npm update -g && npm install -g tar@7.5.8 --force && \
     ./bin/npm install -g less && \
     rm -rf /app/src && \
     rm -rf /app/lib/node_modules/npm/node_modules/tar

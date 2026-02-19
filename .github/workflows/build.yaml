@@ -12,6 +12,9 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,7 +46,7 @@ jobs:
           tags: rttlinfo-lti:scan
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.34.0
         with:
           image-ref: 'rttlinfo-lti:scan'
           severity: 'HIGH,CRITICAL'
