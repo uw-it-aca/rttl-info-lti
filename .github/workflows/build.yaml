@@ -45,19 +45,21 @@ jobs:
           cache-to: type=gha,mode=max
           tags: rttlinfo-lti:scan
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284
+      - name: Run vulnerability scan
+        id: vuln-scan
+        uses: uw-it-aca/actions/container-vuln-scan@main
         with:
-          image-ref: 'rttlinfo-lti:scan'
+          image_tag: rttlinfo-lti:scan
           severity: 'HIGH,CRITICAL'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
+      - name: Fail on vulnerabilities (optional step)
+        # Remove this entire block if you don't want to fail the build
+        if: steps.vuln-scan.outputs.vulnerabilities_found == 'true'
+        shell: bash
+        run: |
+          echo "High or critical vulnerabilities found!"
+          cat ${{ steps.vuln-scan.outputs.results_file }}
+          exit 1
 
       - name: Authenticate to Google Cloud
         if: github.event_name == 'push'
