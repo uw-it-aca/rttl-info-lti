@@ -1,6 +1,14 @@
-ARG DJANGO_CONTAINER_VERSION=3.0.0
+ARG DJANGO_CONTAINER_VERSION=3.0.2
 
 FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-container:${DJANGO_CONTAINER_VERSION} AS app-container
+
+# Update system packages including linux-libc-dev for security patches
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y linux-libc-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+USER acait
 
 ADD --chown=acait:acait . /app/
 ADD --chown=acait:acait docker/ /app/project/
