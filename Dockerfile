@@ -1,6 +1,14 @@
-ARG DJANGO_CONTAINER_VERSION=2.0.8
+ARG DJANGO_CONTAINER_VERSION=3.0.2
 
 FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-container:${DJANGO_CONTAINER_VERSION} AS app-container
+
+# Update system packages including linux-libc-dev for security patches
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y linux-libc-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+USER acait
 
 ADD --chown=acait:acait . /app/
 ADD --chown=acait:acait docker/ /app/project/
@@ -11,8 +19,14 @@ COPY --chown=acait:acait docker/locations.conf /etc/nginx/includes/locations.con
 
 RUN /app/bin/pip install -r requirements.txt
 
-RUN . /app/bin/activate && pip install nodeenv && nodeenv -p &&\
-    npm install -g npm && ./bin/npm install -g less
+# Force npm to update internal dependencies and resolve tar version
+# Also delete bundled versions and let npm resolve to the new version of tar
+# to avoid security vulnerabilities described in CVE-2026-26960
+RUN . /app/bin/activate && pip install nodeenv && nodeenv -p && \
+    npm install -g npm@11.10.0 && npm update -g && npm install -g tar@7.5.8 --force && \
+    ./bin/npm install -g less && \
+    rm -rf /app/src && \
+    rm -rf /app/lib/node_modules/npm/node_modules/tar
 
 # Clear any existing compressed cache and regenerate static files
 RUN rm -rf /app/staticfiles/CACHE

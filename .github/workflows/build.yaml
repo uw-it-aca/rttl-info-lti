@@ -1,6 +1,8 @@
 name: rttl-info-ci
 
 on:
+  pull_request:
+    branches: [main, develop]
   push:
     branches: [main, develop]
 
@@ -10,6 +12,9 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,15 +35,44 @@ jobs:
           echo "VERSION=$VER" >> $GITHUB_ENV
           echo "Building version: $VER"
 
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          target: app-container
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: rttlinfo-lti:scan
+
+      - name: Run vulnerability scan
+        id: vuln-scan
+        uses: uw-it-aca/actions/container-vuln-scan@main
+        with:
+          image_tag: rttlinfo-lti:scan
+          severity: 'HIGH,CRITICAL'
+
+      - name: Fail on vulnerabilities (optional step)
+        # Remove this entire block if you don't want to fail the build
+        if: steps.vuln-scan.outputs.vulnerabilities_found == 'true'
+        shell: bash
+        run: |
+          echo "High or critical vulnerabilities found!"
+          cat ${{ steps.vuln-scan.outputs.results_file }}
+          exit 1
+
       - name: Authenticate to Google Cloud
+        if: github.event_name == 'push'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_RTTL_AR_WRITER_KEY }}
 
       - name: Configure Docker for GAR
+        if: github.event_name == 'push'
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
-      - name: Build and push
+      - name: Push image to GAR
+        if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: .
