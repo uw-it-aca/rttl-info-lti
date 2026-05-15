@@ -1,5 +1,5 @@
 DOCKER_REPO?=us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/rttlinfo-lti
-DOCKER_TAG?=0.0.26
+DOCKER_TAG?=1.0-local
 
 .PHONY: help docker-build docker-push
 
