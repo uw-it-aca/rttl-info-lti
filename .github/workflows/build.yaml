@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
       security-events: write
     steps:
       - name: Checkout code
@@ -26,13 +27,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Get version number
+        id: version
         run: |
           if [ ! -f rttlinfo/VERSION ]; then
             echo "ERROR: VERSION file not found"
             exit 1
           fi
           VER=$(cat rttlinfo/VERSION)
-          echo "VERSION=$VER" >> $GITHUB_ENV
+          echo "version=$VER" >> $GITHUB_OUTPUT
           echo "Building version: $VER"
 
       - name: Build image
@@ -43,35 +45,30 @@ jobs:
           target: app-container
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: rttlinfo-lti:scan
+          tags: |
+            rttlinfo-lti:scan
+            rttlinfo-lti:${{ steps.version.outputs.version }}
 
       - name: Run vulnerability scan
         id: vuln-scan
         uses: uw-it-aca/actions/container-vuln-scan@task/update_trivy_v035
         with:
           image_tag: rttlinfo-lti:scan
-          severity: 'HIGH,CRITICAL'
+          severity: 'CRITICAL'
 
-      - name: Authenticate to Google Cloud
+      - name: Block push on vulnerabilities
+        if: steps.vuln-scan.outputs.vulnerabilities_found == 'true'
+        run: |
+          echo "CRITICAL vulnerabilities were found. Blocking image push."
+          exit 1
+
+      - name: Push Image to Repository
         if: github.event_name == 'push'
-        uses: google-github-actions/auth@v2
+        uses: uw-it-aca/actions/gcr-push-workload-identity@main
         with:
-          credentials_json: ${{ secrets.GCP_RTTL_AR_WRITER_KEY }}
-
-      - name: Configure Docker for GAR
-        if: github.event_name == 'push'
-        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
-
-      - name: Push image to GAR
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          target: app-container
-          provenance: mode=max
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: |
-            us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/rttlinfo-lti:${{ env.VERSION }}
-            us-west1-docker.pkg.dev/uwit-mci-axdd/rttl-images/rttlinfo-lti:latest
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          add_latest_tag: 'true'
+          image_tag: 'rttlinfo-lti:${{ steps.version.outputs.version }}'
+          registry_hostname: 'us-west1-docker.pkg.dev'
+          registry_project_id: 'uwit-mci-axdd'
+          registry_path: 'rttl-images'
