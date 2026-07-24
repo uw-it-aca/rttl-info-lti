@@ -174,7 +174,7 @@ function updateHubUI(hubData) {
     statusText.textContent = 'JupyterHub information was found for this course - please see latest status below.';
   } else if (!hubData.is_eligible) {
     // No hub data was found but the course is not eligible for a JupyterHub
-    statusText.innerHTML = 'This course does not appear to be for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">UW Connect</a>';
+    statusText.innerHTML = 'This course does not appear to be eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">UW Connect</a>';
   } else {
     // No hub data was found and the course is eligible for a JupyterHub - options depend on user role
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
