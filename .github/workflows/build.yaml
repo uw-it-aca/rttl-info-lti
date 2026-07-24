@@ -55,6 +55,56 @@ jobs:
         with:
           image_tag: rttlinfo-lti:scan
           severity: 'CRITICAL'
+          upload_results: 'false'
+
+      - name: Summarize scan findings
+        if: always()
+        run: |
+          RESULTS_FILE='${{ steps.vuln-scan.outputs.results_file }}'
+          if [[ -z "$RESULTS_FILE" || ! -f "$RESULTS_FILE" ]]; then
+            echo "No Trivy results file found at '$RESULTS_FILE'."
+            exit 0
+          fi
+
+          echo "## Trivy scan findings" >> "$GITHUB_STEP_SUMMARY"
+          echo "Results file: $RESULTS_FILE" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          jq -r '
+            .runs[] as $run
+            | ($run.tool.driver.rules // []
+              | map({key: .id, value: (.properties."security-severity" // "n/a")})
+              | from_entries) as $sev_by_rule
+            | $run.results[]?
+            | [
+                (.ruleId // "unknown"),
+                ($sev_by_rule[.ruleId] // "n/a"),
+                ((.message.text // .message.markdown // "no message") | gsub("[\r\n]"; " "))
+              ]
+            | @tsv
+          ' "$RESULTS_FILE" > trivy-findings.tsv
+
+          {
+            echo "rule_id\tsecurity_severity\tmessage"
+            cat trivy-findings.tsv
+          } > trivy-findings-with-header.tsv
+
+          {
+            echo '```text'
+            head -n 200 trivy-findings-with-header.tsv
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-${{ github.run_id }}
+          path: |
+            ${{ steps.vuln-scan.outputs.results_file }}
+            trivy-findings.tsv
+            trivy-findings-with-header.tsv
+          if-no-files-found: warn
 
       - name: Block push on vulnerabilities
         if: steps.vuln-scan.outputs.vulnerabilities_found == 'true'
