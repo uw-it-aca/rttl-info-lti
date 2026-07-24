@@ -29,7 +29,7 @@ setup(
     description='An LTI application that displays RTTL resources and status',
     long_description=README,
     url='https://github.com/uw-it-aca/rttl-info-lti',
-    author="UW-IT SETS",
+    author="UWIT SETS",
     author_email="aca-it@uw.edu",
     classifiers=[
         'Environment :: Web Environment',

@@ -15,7 +15,7 @@
     <div class="row">
       <div class="col">
         <h1 class="h2 mb-3" id="uw_rttlinfo_header">
-          UW-IT JupyterHub for Teaching and Learning
+          UWIT JupyterHub for Teaching and Learning
         </h1>
 
         <div class="p-3 mx-3 mb-5 rounded" style="background: #f4f2ea;">
@@ -103,7 +103,6 @@ const COURSE_LONG_NAME = '{{ course_long_name }}';
 const IS_INSTRUCTOR = {{ is_instructor|yesno:"true,false" }};
 const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
 const IS_TA = {{ is_ta|yesno:"true,false" }};
-const IS_ELIGIBLE = {{ is_eligible|yesno:"true,false" }};
 const USER_EMAIL = '{{ user_email }}';
 const USER_NETID = USER_EMAIL.split('@')[0];
 
@@ -173,9 +172,9 @@ function updateHubUI(hubData) {
   } else if (hubData.rttl_hub_exists) {
     // Hub data was found but not yet deployed - display the latest status message
     statusText.textContent = 'JupyterHub information was found for this course - please see latest status below.';
-  } else if (!IS_ELIGIBLE) {
+  } else if (!hubData.is_eligible) {
     // No hub data was found but the course is not eligible for a JupyterHub
-    statusText.innerHTML = 'This course is not eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">UW Connect</a>';
+    statusText.innerHTML = 'This course does not appear to be eligible for a JupyterHub. You can email <a href="mailto:help@uw.edu">help@uw.edu</a> with questions or review the eligibility criteria in <a href="https://uwconnect.uw.edu/it?id=kb_article_view&sysparm_article=KB0034609" target="_blank">UW Connect</a>';
   } else {
     // No hub data was found and the course is eligible for a JupyterHub - options depend on user role
     if (IS_INSTRUCTOR || IS_ADMIN || IS_TA) {
