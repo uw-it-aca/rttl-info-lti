@@ -1,4 +1,4 @@
-# Copyright 2025 UW-IT, University of Washington
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
 from django.http import HttpResponse
@@ -43,7 +43,6 @@ class LaunchView(BLTILaunchView):
             'is_admin': self.blti.is_administrator,
             'user_email': self.blti.user_email,
             'user_full_name': self.blti.user_full_name,
-            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
         }
 
         return response
@@ -63,7 +62,6 @@ class LaunchView(BLTILaunchView):
             'is_admin': self.blti.is_administrator,
             'user_email': self.blti.user_email,
             'user_full_name': self.blti.user_full_name,
-            'is_eligible': get_course_eligibility(self.blti.course_sis_id),
             'load_hub_data_async': True,  # Flag to trigger AJAX loading
         }
 
@@ -113,6 +111,15 @@ class HubDataApiView(TemplateView):
                     'message')
                 rttl_hub_admins = rttl_data[0].get('hub_admins', [])
 
+            is_eligible = False
+            if not rttl_hub_exists:
+                try:
+                    is_eligible = get_course_eligibility(course_sis_id)
+                except Exception as e:
+                    logger.error(
+                        f"Error checking course eligibility for "
+                        f"{course_sis_id}: {e}")
+
             return JsonResponse({
                 'rttl_hub_exists': rttl_hub_exists,
                 'rttl_hub_url': rttl_hub_url,
@@ -120,6 +127,7 @@ class HubDataApiView(TemplateView):
                 'rttl_hub_status': rttl_hub_status,
                 'rttl_hub_status_message': rttl_hub_status_message,
                 'rttl_hub_admins': rttl_hub_admins,
+                'is_eligible': is_eligible,
             })
 
         except Exception as e:
@@ -174,7 +182,7 @@ class HubRequestView(TemplateView):
     def post(self, request, *args, **kwargs):
         form = CourseConfigurationForm(request.POST)
         logger.debug(f"Form submission received. POST data: {request.POST}")
-        
+
         if form.is_valid():
             logger.debug("Form is valid, processing...")
             try:
@@ -413,10 +421,10 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get BLTI data from session (stored during initial LTI launch)
         blti_data = self.request.session.get('blti_data', {})
-        
+
         # Return context similar to LaunchView but using session data
         context.update({
             'session_id': self.request.session.session_key,
@@ -431,5 +439,5 @@ class HomeView(TemplateView):
             'is_eligible': blti_data.get('is_eligible', False),
             'load_hub_data_async': True,  # Flag to trigger AJAX loading
         })
-        
+
         return context
