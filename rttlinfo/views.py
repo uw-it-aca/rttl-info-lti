@@ -31,7 +31,21 @@ class LaunchView(BLTILaunchView):
         # request.is_secure = lambda: True
         # # DEV __ONLY__ ^^
         response = super().dispatch(request, *args, **kwargs)
-        request.session['blti_data'] = {
+
+        # BLTILaunchView.dispatch() returns early - without ever setting
+        # self.blti - for the LTI 1.3 client-side storage redirect and for
+        # 401 responses. Only record the launch data on a validated launch.
+        if getattr(self, 'blti', None) is not None:
+            request.session['blti_data'] = self.blti_data()
+        else:
+            logger.debug(
+                "No validated LTI launch data on this request; "
+                "leaving session blti_data untouched")
+
+        return response
+
+    def blti_data(self):
+        return {
             'canvas_course_id': self.blti.canvas_course_id,
             'course_sis_id': self.blti.course_sis_id,
             'course_name': self.blti.course_short_name,
@@ -45,25 +59,15 @@ class LaunchView(BLTILaunchView):
             'user_full_name': self.blti.user_full_name,
         }
 
-        return response
-
     def get_context_data(self, **kwargs):
         _ = super().get_context_data(**kwargs)
 
-        return {
+        context = self.blti_data()
+        context.update({
             'session_id': self.request.session.session_key,
-            'canvas_course_id': self.blti.canvas_course_id,
-            'course_sis_id': self.blti.course_sis_id,
-            'course_name': self.blti.course_short_name,
-            'course_long_name': self.blti.course_long_name,
-            'is_instructor': self.blti.is_instructor,
-            'is_ta': self.blti.is_teaching_assistant,
-            'is_student': self.blti.is_student,
-            'is_admin': self.blti.is_administrator,
-            'user_email': self.blti.user_email,
-            'user_full_name': self.blti.user_full_name,
             'load_hub_data_async': True,  # Flag to trigger AJAX loading
-        }
+        })
+        return context
 
 
 class HubDataApiView(TemplateView):
