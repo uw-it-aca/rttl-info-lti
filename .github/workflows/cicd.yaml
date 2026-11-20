@@ -50,12 +50,18 @@ jobs:
 
       - name: Get version number
         id: version
+        env:
+          GIT_REPO_BRANCH: ${{ needs.context.outputs.git_repo_branch }}
         run: |
           if [ ! -f rttlinfo/VERSION ]; then
             echo "ERROR: VERSION file not found"
             exit 1
           fi
           VER=$(cat rttlinfo/VERSION)
+          # keep non-main (eval) builds from sharing a version tag with prod
+          if [ "$GIT_REPO_BRANCH" != "main" ]; then
+            VER="${VER}-dev"
+          fi
           echo "version=$VER" >> $GITHUB_OUTPUT
           echo "Building version: $VER"
 
@@ -140,7 +146,8 @@ jobs:
         uses: uw-it-aca/actions/gcr-push-workload-identity@main
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          add_latest_tag: 'true'
+          # only main publishes latest
+          add_latest_tag: ${{ needs.context.outputs.git_repo_branch == 'main' && 'true' || 'false' }}
           image_tag: ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           registry_hostname: ${{ env.REGISTRY_HOSTNAME }}
           registry_project_id: ${{ env.REGISTRY_PROJECT_ID }}
