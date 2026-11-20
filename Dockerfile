@@ -1,21 +1,9 @@
-ARG DJANGO_CONTAINER_VERSION=3.0.2
+ARG DJANGO_CONTAINER_VERSION=4.0.0
 
 FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-container:${DJANGO_CONTAINER_VERSION} AS app-container
 
-# Update system packages including linux-libc-dev for security patches
-USER root
-RUN apt-get update && \
-    apt-get upgrade -y linux-libc-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-USER acait
-
 ADD --chown=acait:acait . /app/
 ADD --chown=acait:acait docker/ /app/project/
-
-# Ensure nginx includes directory exists and copy locations.conf
-RUN mkdir -p /etc/nginx/includes/
-COPY --chown=acait:acait docker/locations.conf /etc/nginx/includes/locations.conf
 
 RUN /app/bin/pip install -r requirements.txt
 

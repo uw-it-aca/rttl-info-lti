@@ -12,6 +12,15 @@ gateway:
     httpSection: jupyter-prod-http
     httpsSection: jupyter-prod-https
 
+proxyServer:
+  enabled: true
+  locations: |
+    location /rttlinfo/static/ {
+      alias /static/;
+      expires 1y;
+      add_header Cache-Control "public, immutable";
+      access_log off;
+    }
 namespace:
   enabled: true
   name: rttlinfo-lti

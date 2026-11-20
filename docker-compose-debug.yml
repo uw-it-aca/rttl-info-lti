@@ -1,7 +1,13 @@
+# Debug override: runs runserver (TCP on 8000) under debugpy, bypassing the nginx sidecar.
+#   docker compose -f docker-compose.yml -f docker-compose-debug.yml up app
 version: '3.4'
 services:
   app:
+    environment:
+      ENV: localdev
     command: ["sh", "-c", ". '/app/bin/activate' && pip install debugpy -t /tmp && python ./manage.py migrate && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 ./manage.py runserver 0.0.0.0:8000"]
+    volumes:
+      - ./rttlinfo:/app/rttlinfo
     ports:
       - 8000:8000
       - 5678:5678

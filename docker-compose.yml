@@ -1,18 +1,66 @@
+# Emulates the django-production-chart nginx sidecar (proxyServer.enabled: true).
+# Browse http://localhost:8080/rttlinfo/ (PROXY_PORT to change).
+# The app container serves gunicorn on a unix socket shared with nginx;
+# nginx gets the app image's /static as a read-only image volume.
+# ENV must not be localdev here (see docker-compose-debug.yml for runserver).
 version: '3.4'
 
 services:
   app:
-    environment:
-      ENV: localdev
-      PORT: 8000
-      AUTH: BLTI_DEV
-      LTI_DEVELOP_APP: rttlinfo
-    restart: always
-    container_name: app-rttlinfo
+    image: rttlinfo-lti:latest
     build:
       context: .
       target: app-container
+    environment:
+      ENV: ${APP_ENV:-test}
+      PORT: "8000"
+      DJANGO_SECRET: local-dev-only-secret
+      CLUSTER_CNAME: localhost
+      AUTH: BLTI_DEV
+      LTI_DEVELOP_APP: rttlinfo
+      # passed through from your shell when set; the app needs these for RTTL/SWS data
+      RTTL_API_KEY:
+      RTTL_BASE_URL:
+      RESTCLIENTS_SWS_DAO_CLASS:
+      RESTCLIENTS_SWS_HOST:
+      RESTCLIENTS_SWS_OAUTH_BEARER:
+    container_name: app-rttlinfo
+    restart: always
     volumes:
-      - ./rttlinfo:/app/rttlinfo
+      - socket:/var/run/gunicorn
+    healthcheck:
+      test: ["CMD", "/app/bin/python", "-c", "import os,stat,sys; sys.exit(0 if stat.S_ISSOCK(os.stat('/var/run/gunicorn/gunicorn.sock').st_mode) else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    stop_grace_period: 30s
+
+  proxy-server:
+    image: nginx/nginx-unprivileged:1.30.6
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      app:
+        condition: service_started
     ports:
-      - "8000:8000"
+      - "${PROXY_PORT:-8080}:8080"
+    volumes:
+      - ./docker/compose/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/locations.conf:/etc/nginx/includes/locations.conf:ro
+      - socket:/var/run/gunicorn
+      - type: image
+        source: rttlinfo-lti:latest
+        target: /static
+        read_only: true
+        image:
+          subpath: static
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
+volumes:
+  socket:
