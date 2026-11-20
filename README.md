@@ -27,6 +27,91 @@ Project urls.py
     re_path(r'^rttlinfo/', include('rttlinfo.urls')),
     re_path(r'^rttlinfo/blti/', include('blti.urls')),
 
+## LTI 1.3 Integration
+
+This app is an LTI 1.3 tool built on [django-blti](https://github.com/uw-it-aca/django-blti)
+(which wraps pylti1p3). Canvas is the platform; this app never calls Canvas to launch.
+
+### Endpoints (all under `/rttlinfo/`)
+
+| URL | Purpose |
+|---|---|
+| `blti/login` | OIDC third-party-initiated login: Canvas sends the user here first |
+| `blti/jwks` | Tool public key set (Canvas fetches this, e.g. for NRPS/services requests) |
+| `/` (`LaunchView`) | Launch / redirect URI: Canvas POSTs the signed `id_token` here |
+
+### Launch flow
+
+1. A user clicks the course navigation link in Canvas. Canvas calls `blti/login` with
+   `iss`, `client_id`, `login_hint`, `lti_message_hint`, `lti_deployment_id` and
+   `target_link_uri`.
+2. django-blti looks up the registration in `tool.json` by issuer (and `client_id`), stores
+   state and nonce, and redirects the browser to the platform's `auth_login_url`
+   (Canvas `.../api/lti/authorize_redirect`).
+3. Canvas authenticates the user and POSTs a signed `id_token` plus `state` to the tool's
+   redirect URI (`/rttlinfo/`). The redirect URI must exactly match one of the key's
+   Redirect URIs.
+4. When the tool runs in an iframe, the browser may not send the session cookie, so
+   Canvas advertises client-side storage (`lti_storage_target`). The first POST to
+   `/rttlinfo/` is answered with a small JS redirect that fetches state from
+   storage and re-POSTs. This first response carries no validated launch. A single
+   launch therefore shows up as two requests to `/rttlinfo/` in the logs.
+5. django-blti validates the `id_token` signature against the platform's `key_set_url`
+   (Canvas JWKS), checks `state`, `nonce` and `deployment_id`, then normalizes the claims
+   (course, roles, user) into `self.blti`. `LaunchView` copies that into
+   `session['blti_data']` for the rest of the app.
+
+`LTI_CONSUMERS`, `BLTI_AES_KEY`/`BLTI_AES_IV` and LTI 1.1 settings are legacy and not needed
+for a 1.3 launch.
+
+### Tool-side configuration (deployed via Helm values)
+
+| Item | Where |
+|---|---|
+| `tool.json` (platform issuers, `client_id`, `deployment_ids`, platform URLs, key file paths) | `configmaps.lti-tool-config` in `docker/*-values.yml`, mounted at `LTI_CONFIG_DIRECTORY=/lti/config` |
+| Tool key pair (`private-key-1.key`, `public-key-1.key`) | ExternalSecret `rttlinfo-lti.rttl.uw.edu-lti-keys`, mounted at `/lti/keys` |
+| Other secrets (`DJANGO_SECRET`, `RTTL_API_KEY`, `RTTL_BASE_URL`, `RESTCLIENTS_SWS_OAUTH_BEARER`) | ExternalSecret `rttlinfo-lti.rttl.uw.edu-secrets` |
+
+`tool.json` has one entry per Canvas issuer. Production uses `https://canvas.instructure.com`;
+the Canvas test/beta instance uses `https://canvas.test.instructure.com`. Each entry needs
+the Developer Key's `client_id` and the installation's `deployment_ids`. A new key pair can be
+generated with `python manage.py generate_credentials private.key public.key jwt.json`.
+
+### Canvas configuration (installing the tool)
+
+Registration is manual (django-blti does not implement dynamic registration).
+`canvas_app_config_prod.json` is the JSON configuration for the prod key; for another
+environment copy it and replace every `jupyter.rttl.uw.edu` host
+(`target_link_uri`, `oidc_initiation_url`, `public_jwk_url`, `redirect_uris`, and
+`launch_settings.target_link_uri`).
+
+1. **Create the Developer Key** (Admin > Developer Keys > + Developer Key > LTI Key) using
+   "Paste JSON" with the file above. Save, then enable the key (state ON).
+2. Copy the key's **client ID** (the number in the key's Details column) into the matching
+   `client_id` in `tool.json`.
+3. **Install the tool** (Settings > Apps > + App > By Client ID) in the account or course
+   that should have it, using that client ID.
+4. Copy the **deployment ID** from the installed tool's settings (the `Deployment Id` shown
+   by the "Copy" action next to the tool) into `deployment_ids` in `tool.json`, then deploy.
+5. Check the course navigation. The placement is `default: disabled`, so enable it in the
+   course's Settings > Navigation, then launch.
+
+Menu names in Canvas change from time to time; the IDs and URLs above are what matter.
+
+Canvas test/beta refreshes from prod roughly monthly, which overwrites any
+changes made there. The refreshed Developer Key keeps the prod URLs, so after each refresh
+edit the key in the test instance to use the `jupyter.eval.rttl.uw.edu` URLs.
+
+### Troubleshooting a launch
+
+| Symptom | Likely cause |
+|---|---|
+| 404 on `/rttlinfo/blti/login` | route not reaching the app; check the gateway HTTPRoute and `/rttlinfo/` path |
+| Canvas error before reaching the tool | `client_id` or redirect URI does not match the Developer Key |
+| 401 "LTI authentication failure" | `deployment_id` or `client_id` not in `tool.json`, or tool/platform JWKS mismatch |
+| Redirect or cookie problems after the first POST | request seen as HTTP; check `X-Forwarded-Scheme` is set to `https` by the HTTPRoute |
+| 500 with `'LaunchView' object has no attribute 'blti'` | image predates the launch guard in `LaunchView.dispatch` |
+
 ## Deployment Notes
 
 ### Static Files Configuration
@@ -74,6 +159,18 @@ location /rttlinfo/static/ {
 - The base Django container sets `STATIC_ROOT = '/static'` by default
 - Always clear compressed cache when changing static URL configuration: `RUN rm -rf /static/CACHE`
 - Django Compressor requires `COMPRESS_URL` to match `STATIC_URL` for proper URL generation
+
+### Validating LTI launch in eval
+
+The `/rttlinfo/blti/dev` mock launch is intentionally not enabled in deployed
+environments (`LTI_DEVELOP_APP` is only set in `docker-compose.yml`): after the first dev
+launch it replaces `validate_1p3` for the whole pod process, leaving it in a mocked state.
+
+1. Routing: `curl -sI https://jupyter.eval.rttl.uw.edu/rttlinfo/blti/jwks` should return 200
+   with `server: envoy`, and `/rttlinfo/blti/login` should not 404.
+2. Real LTI 1.3 launch: launch the tool from the Canvas eval (beta/test) instance.
+3. Mocked launches: run locally with `docker-compose up` and browse to
+   `http://localhost:8000/rttlinfo/blti/dev`.
 
 ### Deployment Commands
 
