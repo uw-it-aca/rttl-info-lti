@@ -1,5 +1,3 @@
-# TODO: tool.json (client_id, deployment_ids), the rttl/prod/lti secret paths, and the
-# keys they hold are copied from eval and must be confirmed against prod before merging.
 gateway:
   enabled: true
   hostnames:
