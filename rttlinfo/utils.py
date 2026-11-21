@@ -1,9 +1,18 @@
+# Copyright 2026 UWIT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 import re
-from uw_sws import term as sws_term
-from django.core.cache import cache
 from datetime import datetime, time, timedelta
 from logging import getLogger
+
+from django.core.cache import cache
+from uw_sws import term as sws_term
+
 logger = getLogger(__name__)
+
+
+class InvalidTermError(Exception):
+    """Raised when a numeric term is outside the valid range."""
 
 
 def get_term_from_string(term_string):
@@ -14,7 +23,7 @@ def get_term_from_string(term_string):
         # Check if the term string is a number
         term = int(term_string)
         if term < 1 or term > 4:
-            raise Exception(f"Term must be between 1 and 4, got {term}")
+            raise InvalidTermError(f"Term must be between 1 and 4, got {term}")
         return term
     except ValueError:
         pass
@@ -62,10 +71,10 @@ def get_course_eligibility(course_sis):
     logger.debug(f"Checking course eligibility for SIS ID: {course_sis}")
     try:
         # This also handles the case where source_sis is None or empty
-        source_sis, sis = validate_source_sis(course_sis)
+        _, sis = validate_source_sis(course_sis)
         course_year = int(sis.groups()[0])
         course_term = get_term_from_string(sis.groups()[1])
-    except ValueError as e:
+    except ValueError:
         return False
     today = datetime.now().date()
     if course_year > today.year:
@@ -75,10 +84,7 @@ def get_course_eligibility(course_sis):
     logger.debug(f"Current term: {current_term}")
     if course_year < current_term['year']:
         return False
-    if course_year == current_term['year'] and \
-            course_term < get_term_from_string(current_term['quarter']):
-        return False
-    return True
+    return not (course_year == current_term['year'] and course_term < get_term_from_string(current_term['quarter']))
 
 
 def get_term_from_sws(use_cache=True):

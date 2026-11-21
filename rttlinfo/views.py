@@ -1,20 +1,22 @@
 # Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-from django.http import HttpResponse
-from django.views.generic import TemplateView
+from logging import getLogger
+
 from blti.views import BLTILaunchView
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from logging import getLogger
+from django.views.generic import TemplateView
+
+from .api.clients.rttl_client import RttlApiError, get_rttl_client
 from .api.repositories.rttl_repository import RttlInfoRepository
-from django.shortcuts import render, redirect
-from .forms import CourseConfigurationForm
-from .api.clients.rttl_client import get_rttl_client, RttlApiError
 from .dataclasses import CourseStatusUpdate
+from .forms import CourseConfigurationForm
 from .utils import get_course_eligibility
+
 logger = getLogger(__name__)
 
 
@@ -106,7 +108,7 @@ class HubDataApiView(TemplateView):
 
             if rttl_data:
                 if 'latest_status' not in rttl_data[0] or not rttl_data[0]['latest_status']:
-                    raise Exception("No latest status found in RTTL data")
+                    raise ValueError("No latest status found in RTTL data")
                 rttl_hub_exists = True
                 rttl_hub_url = rttl_data[0].get('hub_url')
                 rttl_hub_deployed = rttl_data[0]['latest_status'].get('hub_deployed', False)
@@ -119,7 +121,7 @@ class HubDataApiView(TemplateView):
             if not rttl_hub_exists:
                 try:
                     is_eligible = get_course_eligibility(course_sis_id)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.error(
                         f"Error checking course eligibility for "
                         f"{course_sis_id}: {e}")
@@ -134,7 +136,7 @@ class HubDataApiView(TemplateView):
                 'is_eligible': is_eligible,
             })
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error fetching hub data: {e}")
             return JsonResponse({'error': 'Failed to fetch hub data'},
                                 status=500)
@@ -259,7 +261,7 @@ class HubRequestView(TemplateView):
                                    'An error occurred while submitting your '
                                    'request. Please try again.')
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Unexpected error: {e}")
                 messages.error(request,
                                'An unexpected error occurred. Please try '
@@ -317,7 +319,7 @@ class HubStatusApiView(TemplateView):
         except RttlApiError as e:
             logger.error(f"API error: {e}")
             return JsonResponse({'error': 'API error occurred'}, status=500)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Unexpected error: {e}")
             return JsonResponse({'error': 'Internal server error'}, status=500)
 
@@ -409,7 +411,7 @@ class HubUpdateConfigView(TemplateView):
                 messages.error(
                     request,
                     f'Error updating configuration: {e.message}')
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Unexpected error: {e}")
                 messages.error(request, 'An unexpected error occurred.')
 

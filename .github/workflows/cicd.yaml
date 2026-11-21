@@ -9,6 +9,8 @@ on:
 env:
   # Release name used for the flux manifest and branch names
   RELEASE_NAME: rttlinfo-lti
+  # Django application directory, used by linting and tests
+  DJANGO_APP: rttlinfo
   # Image repository name within the artifact registry
   IMAGE_NAME: rttlinfo-lti
   GAR_LOCATION: us-west1
@@ -42,6 +44,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Run Python Linters
+        continue-on-error: false
+        uses: uw-it-aca/actions/python-linters@main
+        with:
+          app_name: ${{ env.DJANGO_APP }}
+          linter: ruff
+          exclude_paths: 'migrations'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -68,8 +83,8 @@ jobs:
           context: .
           load: true
           target: app-container
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=rttlinfo
+          cache-to: type=gha,scope=rttlinfo,mode=max
           tags: |
             ${{ env.IMAGE_NAME }}:scan
             ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
@@ -83,6 +98,39 @@ jobs:
           import django
           assert importlib.util.find_spec("pip") is None, "pip must not ship in production"
           '
+
+      # Shares the build stage with production, but retains pip for test installs
+      - name: Build Test Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: app-test-container
+          tags: app-test-container
+          push: false
+          load: true
+          cache-from: type=gha,scope=rttlinfo-test
+          cache-to: type=gha,scope=rttlinfo-test,mode=max
+
+      - name: Run Tests in Image
+        shell: bash
+        run: >-
+          docker run -u root -t
+          -v ${PWD}:/coverage
+          -e DJANGO_APP="$DJANGO_APP"
+          -e ENV=localdev
+          -e SECRET_KEY=ci-not-a-real-secret
+          -e ALLOWED_HOSTS=localhost
+          app-test-container
+          bash -c ". ./docker/test.sh"
+
+      - name: Record Test Results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip coverage coveralls==4.1.0
+          coverage combine
+          coveralls
 
       - name: Run vulnerability scan
         id: vuln-scan

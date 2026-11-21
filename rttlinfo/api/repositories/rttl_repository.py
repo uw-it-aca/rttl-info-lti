@@ -1,8 +1,13 @@
-from django.core.cache import cache
-from rttlinfo.api.clients.rttl_client import RttlApiClient
+# Copyright 2026 UWIT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 import hashlib
 import html
 from urllib.parse import unquote_plus
+
+from django.core.cache import cache
+
+from rttlinfo.api.clients.rttl_client import RttlApiClient
 
 
 class RttlInfoRepository:

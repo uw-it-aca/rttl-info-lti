@@ -1,5 +1,11 @@
+# Copyright 2026 UWIT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
+from typing import ClassVar
+
 from django import forms
 from django.core.exceptions import ValidationError
+
 from .dataclasses import CourseConfiguration, GitpullerTarget
 
 
@@ -88,24 +94,30 @@ class CourseConfigurationForm(forms.Form):
         help_text='Select the image to be used for your course',
         required=False,
         choices=[
-            ('scipy', 'SciPy - Scientific computing with Python [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/scipy" '
-             'target="_blank">Image details</a>]'),
-            ('datascience', 'Datascience - Data analysis and visualization [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/datascience" '
-             'target="_blank">Image details</a>]'),
-            ('tensorflow', 'TensorFlow - Machine learning and deep learning [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/tensorflow" '
-             'target="_blank">Image details</a>]'),
-            ('r', 'R - Statistical computing and graphics [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/r" '
-             'target="_blank">Image details</a>]'),
-            ('rstudio', 'RStudio Server (Open Source Edition) [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/rstudio" '
-             'target="_blank">Image details</a>]'),
-            ('rstudio-ai', 'RStudio Server with AI integrations enabled [<a href='
-             '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/ai" '
-             'target="_blank">Image details</a>]'),
+            ('scipy',
+                ('SciPy - Scientific computing with Python [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/scipy" '
+                 'target="_blank">Image details</a>]')),
+            ('datascience',
+                ('Datascience - Data analysis and visualization [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/datascience" '
+                 'target="_blank">Image details</a>]')),
+            ('tensorflow',
+                ('TensorFlow - Machine learning and deep learning [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/tensorflow" '
+                 'target="_blank">Image details</a>]')),
+            ('r',
+                ('R - Statistical computing and graphics [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/r" '
+                 'target="_blank">Image details</a>]')),
+            ('rstudio',
+                ('RStudio Server (Open Source Edition) [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/rstudio" '
+                 'target="_blank">Image details</a>]')),
+            ('rstudio-ai',
+                ('RStudio Server with AI integrations enabled [<a href='
+                 '"https://github.com/uw-it-aca/rttl-notebooks/tree/main/ai" '
+                 'target="_blank">Image details</a>]')),
             ('custom', 'Custom image (instructor supported)'),
         ],
         initial='scipy',
@@ -387,7 +399,7 @@ class CourseStatusForm(forms.Form):
     Form for creating course status updates.
     """
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list] = [
         ('requested', 'Requested'),
         ('blocked', 'Blocked'),
         ('pending', 'Pending'),
