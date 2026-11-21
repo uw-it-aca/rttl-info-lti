@@ -1,0 +1,12 @@
+# Runs the app with Django runserver on port 8000 (ENV=localdev, no nginx sidecar).
+# Required for the mocked LTI launch at http://localhost:8000/rttlinfo/blti/dev,
+# which the base image only enables when ENV=localdev.
+#   docker compose -f docker-compose.yml -f docker-compose-localdev.yml up app
+services:
+  app:
+    environment:
+      ENV: localdev
+    volumes:
+      - ./rttlinfo:/app/rttlinfo
+    ports:
+      - 8000:8000

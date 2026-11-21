@@ -1,118 +1,151 @@
-autoscaling:
+gateway:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 4
-targetAverageUtilization: 100
-resources:
-  requests:
-    cpu: 50m
+  hostnames:
+    - jupyter.rttl.uw.edu
+  paths:
+    - /rttlinfo/
+  listenerSet:
+    name: jupyter-prod
+    namespace: default
+    httpSection: jupyter-prod-http
+    httpsSection: jupyter-prod-https
+
+proxyServer:
+  enabled: true
+  locations: |
+    location /rttlinfo/static/ {
+      alias /static/;
+      expires 1y;
+      add_header Cache-Control "public, immutable";
+      access_log off;
+    }
+namespace:
+  enabled: true
+  name: rttlinfo-lti
+repo: rttlinfo-lti
+instance: prod
 affinity:
-   podsSpanNodes: true
-
-ingress:
-  enabled: true
-  tls:
-    rttlinfo:
-      secretName: rttlinfo.canvas.uw.edu-ingress-cert
-      hosts:
-        - rttlinfo.canvas.uw.edu
-  hosts:
-    rttlinfo:
-      host: rttlinfo.canvas.uw.edu
-      paths:
-        - "/"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
-
+  podsSpanNodes: true
 lifecycle:
   enabled: true
   preStop:
     enabled: true
 readiness:
   enabled: true
-
 database:
   engine: null
-
-repo: rttl-info-lti
-instance: prod
-
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 256Mi
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+targetAverageUtilization: 100
 memcached:
   enabled: true
   replicaCount: 2
   updateStrategy:
     type: RollingUpdate
-
-certs:
-  mounted: true
-  certPath: /certs/rttlinfo.canvas.uw.edu-ic.cert
-  keyPath: /certs/rttlinfo.canvas.uw.edu-ic.key
-  secretName: rttlinfo.canvas.uw.edu-ic-certs
-
+configmaps:
+  lti-tool-config:
+    tool.json: |
+      {
+        "https://canvas.instructure.com": [{
+          "default": true,
+          "client_id": "100000000000864",
+          "auth_login_url": "https://sso.canvaslms.com/api/lti/authorize_redirect",
+          "auth_token_url": "https://sso.canvaslms.com/login/oauth2/token",
+          "key_set": null,
+          "key_set_url": "https://sso.canvaslms.com/api/lti/security/jwks",
+          "private_key_file": "/lti/keys/private-key-1.key",
+          "public_key_file": "/lti/keys/public-key-1.key",
+          "deployment_ids": ["215319:c78d46b24c785a8ad37b5bf9bdf26ceb32cc9d18"]
+        }]
+      }
+mountedSecrets:
+  enabled: true
+  secretName: rttlinfo-lti.rttl.uw.edu-lti-keys
+  mountPath: /lti/keys
+podVolumes:
+  lti-tool-config:
+    volume:
+      configMap:
+        name: lti-tool-config
+    mount:
+      mountPath: /lti/config
 environmentVariables:
+  - name: RESTCLIENTS_SWS_DAO_CLASS
+    value: "Live"
+  - name: RESTCLIENTS_SWS_HOST
+    value: "https://ws.api.uw.edu"
   - name: CLUSTER_CNAME
-    value: rttlinfo.canvas.uw.edu
+    value: jupyter.rttl.uw.edu
   - name: AUTH
     value: BLTI
   - name: ENV
     value: prod
   - name: SESSION_BACKEND
     value: MEMCACHED
-  - name: PWS_ENV
-    value: PROD
-  - name: CANVAS_ENV
-    value: PROD
-  - name: CANVAS_TIMEOUT
-    value: "10"
-
+  - name: LTI_CONFIG_DIRECTORY
+    value: /lti/config
 externalSecrets:
   enabled: true
   secrets:
-    - name: rttlinfo.canvas.uw.edu-secrets
-      externalKey: rttl-info-lti/prod/secrets
+    - name: rttlinfo-lti.rttl.uw.edu-secrets
+      externalKey: rttl/prod/lti/secrets
       data:
         - name: django-secret
           property: django-secret
-    - name: rttlinfo.canvas.uw.edu-shared-secrets
-      externalKey: rttl-info-lti/shared/secrets
-      data:
         - name: lti-consumers
           property: lti-consumers
         - name: blti-aes-key
           property: blti-aes-key
         - name: blti-aes-iv
           property: blti-aes-iv
-    - name: rttlinfo.canvas.uw.edu-canvas-secrets
-      externalKey: canvas/shared/secrets
+        - name: rttl-api-key
+          property: rttl-api-key
+        - name: rttl-base-url
+          property: rttl-base-url
+        - name: sws-access-token
+          property: sws-access-token
+    - name: rttlinfo-lti.rttl.uw.edu-lti-keys
+      externalKey: rttl/prod/lti/lti-keys
       data:
-        - name: canvas-api-token
-          property: canvas-api-token
-    - name: rttlinfo.canvas.uw.edu-ic-certs
-      externalKey: rttl-info-lti/prod/ic-certs
-      data:
-        - name: rttlinfo.canvas.uw.edu-ic.cert
-          property: rttlinfo.canvas.uw.edu-ic.cert
-        - name: rttlinfo.canvas.uw.edu-ic.key
-          property: rttlinfo.canvas.uw.edu-ic.key
-
+        - name: private-key-1.key
+          property: private-key-1.key
+        - name: public-key-1.key
+          property: public-key-1.key
 environmentVariablesSecrets:
   django-secret:
     name: DJANGO_SECRET
-    secretName: rttlinfo.canvas.uw.edu-secrets
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
     secretKey: django-secret
-  LTIConsumers:
-    name: LTI_CONSUMERS
-    secretName: rttlinfo.canvas.uw.edu-shared-secrets
-    secretKey: lti-consumers
-  BLTIAESKey:
-    name: BLTI_AES_KEY
-    secretName: rttlinfo.canvas.uw.edu-shared-secrets
-    secretKey: blti-aes-key
   BLTIAESIV:
     name: BLTI_AES_IV
-    secretName: rttlinfo.canvas.uw.edu-shared-secrets
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
     secretKey: blti-aes-iv
-  canvasAPIToken:
-    name: CANVAS_OAUTH_BEARER
-    secretName: rttlinfo.canvas.uw.edu-canvas-secrets
-    secretKey: canvas-api-token
+  BLTIAESKey:
+    name: BLTI_AES_KEY
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
+    secretKey: blti-aes-key
+  LTIConsumers:
+    name: LTI_CONSUMERS
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
+    secretKey: lti-consumers
+  rttlAPIKey:
+    name: RTTL_API_KEY
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
+    secretKey: rttl-api-key
+  rttlBaseURL:
+    name: RTTL_BASE_URL
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
+    secretKey: rttl-base-url
+  swsToken:
+    name: RESTCLIENTS_SWS_OAUTH_BEARER
+    secretName: rttlinfo-lti.rttl.uw.edu-secrets
+    secretKey: sws-access-token
