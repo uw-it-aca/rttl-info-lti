@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "UW-RTTL-Info-LTI"
+dynamic = ["version"]
+description = "An LTI application that displays RTTL resources and status"
+readme = {text = "See the README on GitHub: https://github.com/uw-it-aca/rttl-info-lti", content-type = "text/plain"}
+license = {text = "Apache-2.0"}
+authors = [{name = "UWIT SETS", email = "aca-it@uw.edu"}]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+]
+dependencies = [
+    "Django~=4.2",
+    "django-blti~=3.0",
+    "django-compressor",
+    "uw-memcached-clients~=1.0",
+    "UW-RestClients-SWS",
+]
+
+[project.urls]
+Homepage = "https://github.com/uw-it-aca/rttl-info-lti"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["rttlinfo"]
+
+[tool.setuptools.dynamic]
+version = {file = "rttlinfo/VERSION"}

@@ -112,6 +112,27 @@ edit the key in the test instance to use the `jupyter.eval.rttl.uw.edu` URLs.
 | Redirect or cookie problems after the first POST | request seen as HTTP; check `X-Forwarded-Scheme` is set to `https` by the HTTPRoute |
 | 500 with `'LaunchView' object has no attribute 'blti'` | image predates the launch guard in `LaunchView.dispatch` |
 
+## Running locally with docker compose
+
+Export the RTTL settings first; the app cannot render a launch without `RTTL_API_KEY`:
+
+```bash
+export RTTL_API_KEY=<RTTL REST API key>
+export RTTL_BASE_URL=https://jupyter.eval.rttl.uw.edu
+```
+
+Compose passes these through when set (it also passes `RESTCLIENTS_SWS_DAO_CLASS`, `RESTCLIENTS_SWS_HOST`
+and `RESTCLIENTS_SWS_OAUTH_BEARER` if you need SWS data).
+
+| Goal | Command | URL |
+|------|---------|-----|
+| Deployed-like: gunicorn plus an nginx sidecar | `docker compose up --build` | `http://localhost:8080/rttlinfo/` |
+| Mocked LTI launch (runserver, `ENV=localdev`) | `docker compose -f docker-compose.yml -f docker-compose-localdev.yml up --build app` | `http://localhost:8000/rttlinfo/blti/dev` |
+| Same, with debugpy on port 5678 | `docker compose -f docker-compose.yml -f docker-compose-debug.yml up --build app` | `http://localhost:8000/rttlinfo/blti/dev` |
+
+The mock launch is only available with `ENV=localdev`, so `/rttlinfo/blti/dev` returns 404 through the
+nginx sidecar setup on port 8080.
+
 ## Deployment Notes
 
 ### Static Files Configuration
@@ -128,7 +149,7 @@ COMPRESS_ROOT = STATIC_ROOT       # Where compressor looks for files
 COMPRESS_URL = STATIC_URL         # URL prefix for compressed files
 ```
 
-**docker/locations.conf:**
+**docker/locations.conf** (also set as `proxyServer.locations` in `docker/*-values.yml`; the app image no longer contains nginx):
 ```nginx
 location /rttlinfo/static/ {
     alias /static/;
@@ -169,8 +190,7 @@ launch it replaces `validate_1p3` for the whole pod process, leaving it in a moc
 1. Routing: `curl -sI https://jupyter.eval.rttl.uw.edu/rttlinfo/blti/jwks` should return 200
    with `server: envoy`, and `/rttlinfo/blti/login` should not 404.
 2. Real LTI 1.3 launch: launch the tool from the Canvas eval (beta/test) instance.
-3. Mocked launches: run locally with `docker-compose up` and browse to
-   `http://localhost:8000/rttlinfo/blti/dev`.
+3. Mocked launches: run locally as described in [Running locally](#running-locally-with-docker-compose).
 
 ### Deployment Commands
 
