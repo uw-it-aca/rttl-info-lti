@@ -1,6 +1,6 @@
 ARG DJANGO_CONTAINER_VERSION=4.0.0
 
-FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-container:${DJANGO_CONTAINER_VERSION} AS app-container
+FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-container:${DJANGO_CONTAINER_VERSION} AS app-build-container
 
 ADD --chown=acait:acait . /app/
 ADD --chown=acait:acait docker/ /app/project/
@@ -21,7 +21,14 @@ RUN rm -rf /app/staticfiles/CACHE
 RUN . /app/bin/activate && python manage.py collectstatic --noinput &&\
     python manage.py compress -f
 
+# Production omits pip and its vendored dependencies after installation.
+FROM app-build-container AS app-container
+
+RUN /app/bin/python -m pip uninstall --yes pip
+
+# Tests retain pip from the shared build stage, not the production stage.
+# Build releases with --target app-container (see .github/workflows/cicd.yaml).
 FROM us-docker.pkg.dev/uwit-mci-axdd/containers/django-test-container:${DJANGO_CONTAINER_VERSION} AS app-test-container
 
-COPY --from=app-container /app/ /app/
-COPY --from=app-container /static/ /static/
+COPY --from=app-build-container /app/ /app/
+COPY --from=app-build-container /static/ /static/
