@@ -1,9 +1,6 @@
 # Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 
-# Copyright 2026 UWIT, University of Washington
-# SPDX-License-Identifier: Apache
-
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
 
