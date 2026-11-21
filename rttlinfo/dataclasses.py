@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from django.core.validators import EmailValidator
+from typing import Any, ClassVar
+
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 
 
 @dataclass
@@ -24,7 +25,7 @@ class AdminImage:
         return f"{self.name} ({self.repo}:{self.tag})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'AdminImage':
+    def from_api_data(cls, data: dict[str, Any]) -> 'AdminImage':
         """
         Create AdminImage instance from API response data.
         """
@@ -51,7 +52,7 @@ class AdminCourseExtraEnv:
         return f"{self.key}={self.value}"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'AdminCourseExtraEnv':
+    def from_api_data(cls, data: dict[str, Any]) -> 'AdminCourseExtraEnv':
         """
         Create AdminCourseExtraEnv instance from API response data.
         """
@@ -79,7 +80,7 @@ class AdminCourseGitPullerTarget:
 
     @classmethod
     def from_api_data(
-            cls, data: Dict[str, Any]) -> 'AdminCourseGitPullerTarget':
+            cls, data: dict[str, Any]) -> 'AdminCourseGitPullerTarget':
         """
         Create AdminCourseGitPullerTarget instance from API response data.
         """
@@ -100,7 +101,7 @@ class AdminCourseSettings:
     """
     id: int
     course: int  # Foreign key reference to AdminCourse ID
-    image: Optional[AdminImage] = None
+    image: AdminImage | None = None
     storage_capacity: str = "1Gi"
     cpu_request: str = "0.5"
     cpu_limit: str = "1"
@@ -111,20 +112,20 @@ class AdminCourseSettings:
     cull_time: int = 3600
     spawner: str = "kubespawner"
     image_puller_enabled: bool = True
-    image_tag: Optional[str] = None
+    image_tag: str | None = None
     feature_nfs: bool = False
     feature_binderhub: bool = False
     feature_nocanvas: bool = False
     feature_oidcauth: bool = False
-    extra_envs: List[AdminCourseExtraEnv] = field(default_factory=list)
-    git_puller_targets: List[AdminCourseGitPullerTarget] = \
+    extra_envs: list[AdminCourseExtraEnv] = field(default_factory=list)
+    git_puller_targets: list[AdminCourseGitPullerTarget] = \
         field(default_factory=list)
 
     def __str__(self):
         return f"Settings for course {self.course}"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'AdminCourseSettings':
+    def from_api_data(cls, data: dict[str, Any]) -> 'AdminCourseSettings':
         """
         Create AdminCourseSettings instance from API response data.
         """
@@ -189,7 +190,7 @@ class AdminCourseList:
         return f"{self.name} ({self.sis_course_id})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'AdminCourseList':
+    def from_api_data(cls, data: dict[str, Any]) -> 'AdminCourseList':
         """
         Create AdminCourseList instance from API response data.
         """
@@ -239,7 +240,7 @@ class AdminCourseDetail:
         return f"{self.name} ({self.sis_course_id})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'AdminCourseDetail':
+    def from_api_data(cls, data: dict[str, Any]) -> 'AdminCourseDetail':
         """
         Create AdminCourseDetail instance from API response data.
         """
@@ -277,7 +278,7 @@ class GitpullerTarget:
         {self.gitpuller_sync_dir}"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'GitpullerTarget':
+    def from_api_data(cls, data: dict[str, Any]) -> 'GitpullerTarget':
         """
         Create GitpullerTarget instance from API response data.
         """
@@ -287,7 +288,7 @@ class GitpullerTarget:
             gitpuller_sync_dir=data['gitpuller_sync_dir']
         )
 
-    def to_api_data(self) -> Dict[str, Any]:
+    def to_api_data(self) -> dict[str, Any]:
         """
         Convert to API format.
         """
@@ -305,17 +306,17 @@ class CourseConfiguration:
     Maps to the CourseConfiguration schema from the API.
     """
     configuration_applied: bool = False
-    cpu_request: Optional[int] = None
-    memory_request: Optional[int] = None
-    storage_request: Optional[int] = None
+    cpu_request: int | None = None
+    memory_request: int | None = None
+    storage_request: int | None = None
     image_uri: str = ""
     image_tag: str = ""
     features_request: str = ""
-    gitpuller_targets: List[GitpullerTarget] = field(default_factory=list)
+    gitpuller_targets: list[GitpullerTarget] = field(default_factory=list)
     configuration_comments: str = ""
-    create_timestamp: Optional[datetime] = None
+    create_timestamp: datetime | None = None
 
-    def get_features_list(self) -> List[str]:
+    def get_features_list(self) -> list[str]:
         """
         Return features as a list.
         """
@@ -324,7 +325,7 @@ class CourseConfiguration:
         return [feature.strip() for feature in self.features_request.split(',')
                 if feature.strip()]
 
-    def set_features_list(self, features_list: List[str]) -> None:
+    def set_features_list(self, features_list: list[str]) -> None:
         """
         Set features from a list.
         """
@@ -334,7 +335,7 @@ class CourseConfiguration:
         return f"Configuration - Applied: {self.configuration_applied}"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'CourseConfiguration':
+    def from_api_data(cls, data: dict[str, Any]) -> 'CourseConfiguration':
         """
         Create CourseConfiguration instance from API response data.
         """
@@ -356,7 +357,7 @@ class CourseConfiguration:
             create_timestamp=parse_api_datetime(data.get('create_timestamp'))
         )
 
-    def to_api_data(self) -> Dict[str, Any]:
+    def to_api_data(self) -> dict[str, Any]:
         """
         Convert to API format.
         """
@@ -384,13 +385,13 @@ class CourseStatus:
     status: str
     hub_deployed: bool = False
     message: str = ""
-    configuration: Optional[CourseConfiguration] = None
-    status_added: Optional[datetime] = None
+    configuration: CourseConfiguration | None = None
+    status_added: datetime | None = None
     status_added_by: str = ""
     status_added_by_full_name: str = ""
     course: int = 0  # Course ID reference
 
-    STATUS_CHOICES = {
+    STATUS_CHOICES: ClassVar[dict] = {
         'requested': 'Requested',
         'blocked': 'Blocked',
         'pending': 'Pending',
@@ -419,7 +420,7 @@ class CourseStatus:
         return f"Course {self.course} - {self.status} ({self.status_added})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'CourseStatus':
+    def from_api_data(cls, data: dict[str, Any]) -> 'CourseStatus':
         """
         Create CourseStatus instance from API response data.
         """
@@ -453,8 +454,8 @@ class CourseStatusDetail:
     status: str
     hub_deployed: bool = False
     message: str = ""
-    configuration: Optional[CourseConfiguration] = None
-    status_added: Optional[datetime] = None
+    configuration: CourseConfiguration | None = None
+    status_added: datetime | None = None
     status_added_by: str = ""
     status_added_by_full_name: str = ""
 
@@ -462,7 +463,7 @@ class CourseStatusDetail:
         return f"Course {self.course} - {self.status} ({self.status_added})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'CourseStatusDetail':
+    def from_api_data(cls, data: dict[str, Any]) -> 'CourseStatusDetail':
         """
         Create CourseStatusDetail instance from API response data.
         """
@@ -491,7 +492,7 @@ class Course:
     Data class representing a course that may have a JupyterHub.
     Maps to the Course schema from the API.
     """
-    QUARTER_CHOICES = {
+    QUARTER_CHOICES: ClassVar[dict] = {
         1: 'Winter',
         2: 'Spring',
         3: 'Summer',
@@ -504,10 +505,10 @@ class Course:
     course_quarter: int
     sis_course_id: str
     hub_url: str
-    last_changed: Optional[datetime] = None
+    last_changed: datetime | None = None
     in_admin_courses: bool = False  # Read-only computed field
-    latest_status: Optional[CourseStatus] = None  # Read-only computed field
-    hub_admins: Optional[List[str]] = None
+    latest_status: CourseStatus | None = None  # Read-only computed field
+    hub_admins: list[str] | None = None
 
     def get_quarter_display_name(self) -> str:
         """
@@ -519,7 +520,7 @@ class Course:
         return f"{self.name} ({self.sis_course_id})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'Course':
+    def from_api_data(cls, data: dict[str, Any]) -> 'Course':
         """
         Create Course instance from API response data.
         """
@@ -553,10 +554,10 @@ class CourseDetail:
     course_quarter: int
     sis_course_id: str
     hub_url: str
-    last_changed: Optional[datetime] = None
+    last_changed: datetime | None = None
     in_admin_courses: bool = False  # Read-only computed field
-    statuses: List[CourseStatus] = field(default_factory=list)  # Read-only
-    hub_admins: Optional[List[str]] = None
+    statuses: list[CourseStatus] = field(default_factory=list)  # Read-only
+    hub_admins: list[str] | None = None
 
     def get_quarter_display_name(self) -> str:
         """
@@ -568,7 +569,7 @@ class CourseDetail:
         return f"{self.name} ({self.sis_course_id})"
 
     @classmethod
-    def from_api_data(cls, data: Dict[str, Any]) -> 'CourseDetail':
+    def from_api_data(cls, data: dict[str, Any]) -> 'CourseDetail':
         """
         Create CourseDetail instance from API response data.
         """
@@ -604,7 +605,7 @@ class CourseCreate:
     sis_course_id: str
     hub_url: str = ""
 
-    def to_api_data(self) -> Dict[str, Any]:
+    def to_api_data(self) -> dict[str, Any]:
         """Convert to API format."""
         return {
             'name': self.name,
@@ -625,9 +626,9 @@ class CourseStatusCreate:
     status: str
     hub_deployed: bool = False
     message: str = ""
-    configuration: Optional[CourseConfiguration] = None
+    configuration: CourseConfiguration | None = None
 
-    def to_api_data(self) -> Dict[str, Any]:
+    def to_api_data(self) -> dict[str, Any]:
         """
         Convert to API format.
         """
@@ -653,16 +654,16 @@ class CourseStatusUpdate:
     auto_create: bool = False
     hub_deployed: bool = False
     message: str = ""
-    configuration: Optional[CourseConfiguration] = None
+    configuration: CourseConfiguration | None = None
     name: str = ""
-    course_year: Optional[int] = None
+    course_year: int | None = None
     course_quarter: str = ""
     hub_url: str = ""
     status_added_by: str = ""
     status_added_by_full_name: str = ""
-    hub_admins: Optional[List[str]] = None
+    hub_admins: list[str] | None = None
 
-    def to_api_data(self) -> Dict[str, Any]:
+    def to_api_data(self) -> dict[str, Any]:
         """
         Convert to API format.
         course_quarter & course_year have been temporarily removed as they
@@ -686,7 +687,7 @@ class CourseStatusUpdate:
 
 
 # Utility functions
-def parse_api_datetime(dt_str: Optional[str]) -> Optional[datetime]:
+def parse_api_datetime(dt_str: str | None) -> datetime | None:
     """
     Parse datetime string from API response.
     """
@@ -694,10 +695,10 @@ def parse_api_datetime(dt_str: Optional[str]) -> Optional[datetime]:
         return None
     if isinstance(dt_str, datetime):
         return dt_str
-    return datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+    return datetime.fromisoformat(dt_str)
 
 
-def serialize_for_api(data_obj) -> Dict[str, Any]:
+def serialize_for_api(data_obj) -> dict[str, Any]:
     """
     Convert dataclass instance to dictionary suitable for API calls.
     """
@@ -705,7 +706,7 @@ def serialize_for_api(data_obj) -> Dict[str, Any]:
         return data_obj.to_api_data()
     elif hasattr(data_obj, '__dataclass_fields__'):
         result = {}
-        for field_name, field_obj in data_obj.__dataclass_fields__.items():
+        for field_name in data_obj.__dataclass_fields__:
             value = getattr(data_obj, field_name)
             if isinstance(value, datetime):
                 result[field_name] = value.isoformat()
@@ -729,47 +730,47 @@ class ApiDataFactory:
     """
 
     @staticmethod
-    def create_admin_image(data: Dict[str, Any]) -> AdminImage:
+    def create_admin_image(data: dict[str, Any]) -> AdminImage:
         return AdminImage.from_api_data(data)
 
     @staticmethod
-    def create_admin_course_list(data: Dict[str, Any]) -> AdminCourseList:
+    def create_admin_course_list(data: dict[str, Any]) -> AdminCourseList:
         return AdminCourseList.from_api_data(data)
 
     @staticmethod
-    def create_admin_course_detail(data: Dict[str, Any]) -> AdminCourseDetail:
+    def create_admin_course_detail(data: dict[str, Any]) -> AdminCourseDetail:
         return AdminCourseDetail.from_api_data(data)
 
     @staticmethod
     def create_admin_course_settings(
-            data: Dict[str, Any]) -> AdminCourseSettings:
+            data: dict[str, Any]) -> AdminCourseSettings:
         return AdminCourseSettings.from_api_data(data)
 
     @staticmethod
-    def create_course(data: Dict[str, Any]) -> Course:
+    def create_course(data: dict[str, Any]) -> Course:
         return Course.from_api_data(data)
 
     @staticmethod
-    def create_course_detail(data: Dict[str, Any]) -> CourseDetail:
+    def create_course_detail(data: dict[str, Any]) -> CourseDetail:
         return CourseDetail.from_api_data(data)
 
     @staticmethod
     def create_course_configuration(
-            data: Dict[str, Any]) -> CourseConfiguration:
+            data: dict[str, Any]) -> CourseConfiguration:
         return CourseConfiguration.from_api_data(data)
 
     @staticmethod
     def create_course_status(
-            data: Dict[str, Any]) -> CourseStatus:
+            data: dict[str, Any]) -> CourseStatus:
         return CourseStatus.from_api_data(data)
 
     @staticmethod
     def create_course_status_detail(
-            data: Dict[str, Any]) -> CourseStatusDetail:
+            data: dict[str, Any]) -> CourseStatusDetail:
         return CourseStatusDetail.from_api_data(data)
 
     @staticmethod
-    def create_gitpuller_target(data: Dict[str, Any]) -> GitpullerTarget:
+    def create_gitpuller_target(data: dict[str, Any]) -> GitpullerTarget:
         return GitpullerTarget.from_api_data(data)
 
 

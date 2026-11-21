@@ -1,14 +1,13 @@
 # Copyright 2026 UWIT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
+# Copyright 2026 UWIT, University of Washington
 # SPDX-License-Identifier: Apache
 
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
-from .views import \
-    LaunchView, \
-    HubDataApiView, \
-    HubRequestView, \
-    HubManageView, \
-    HomeView
+
+from .views import HomeView, HubDataApiView, HubManageView, HubRequestView, LaunchView
 
 urlpatterns = [
     # LTI launch throws CSRF errors since it's a POST from external domain

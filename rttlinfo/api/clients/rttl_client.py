@@ -1,10 +1,14 @@
-import requests
-import logging
-from typing import Dict, List, Optional, Union
-from django.conf import settings
-from django.core.cache import cache
+# Copyright 2026 UWIT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+
 import hashlib
 import json
+import logging
+
+import requests
+from django.conf import settings
+from django.core.cache import cache
+
 # from rttlinfo.dataclasses import Course, CourseStatus, CourseConfiguration
 
 logger = logging.getLogger(__name__)
@@ -16,8 +20,8 @@ class RttlApiError(Exception):
     """
     def __init__(
             self, message: str,
-            status_code: int = None,
-            response_data: dict = None):
+            status_code: int | None = None,
+            response_data: dict | None = None):
         self.message = message
         self.status_code = status_code
         self.response_data = response_data
@@ -33,8 +37,8 @@ class RttlApiClient:
 
     def __init__(
             self,
-            base_url: str = None,
-            api_key: str = None,
+            base_url: str | None = None,
+            api_key: str | None = None,
             version: str = "v1",
             cache_timeout: int = 300):
         self.base_url = base_url or getattr(
@@ -65,7 +69,7 @@ class RttlApiClient:
             self,
             method: str,
             endpoint: str,
-            params: dict = None) -> str:
+            params: dict | None = None) -> str:
         """
         Generate cache key for request.
         Handles special characters (spaces, ampersands) by using MD5 hash.
@@ -143,7 +147,7 @@ class RttlApiClient:
             return response
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"API request failed: {method} {url} - {str(e)}")
+            logger.error(f"API request failed: {method} {url} - {e!s}")
             status_code = getattr(
                 e.response,
                 'status_code',
@@ -153,17 +157,17 @@ class RttlApiClient:
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     response_data = e.response.json()
-                except Exception:
-                    pass
+                except ValueError:
+                    logger.debug("Error response body was not JSON")
 
             raise RttlApiError(
-                f"API request failed: {str(e)}",
+                f"API request failed: {e!s}",
                 status_code,
                 response_data)
 
     def _handle_response(
             self,
-            response: requests.Response) -> Union[Dict, List]:
+            response: requests.Response) -> dict | list:
         """
         Handle API response and return JSON data.
         """
@@ -171,9 +175,9 @@ class RttlApiClient:
             try:
                 return response.json()
             except ValueError as e:
-                logger.error(f"Invalid JSON response: {str(e)}")
+                logger.error(f"Invalid JSON response: {e!s}")
                 raise RttlApiError(
-                    f"Invalid JSON response: {str(e)}",
+                    f"Invalid JSON response: {e!s}",
                     response.status_code)
         else:
             logger.error(
@@ -186,8 +190,8 @@ class RttlApiClient:
     # Course methods
     def list_courses(
             self,
-            sis_id: str = None,
-            use_cache: bool = True) -> List[Dict]:
+            sis_id: str | None = None,
+            use_cache: bool = True) -> list[dict]:
         """
         List courses.
 
@@ -209,7 +213,7 @@ class RttlApiClient:
         # [Course.from_api_data(i) for i in self._handle_response(response)]
         return self._handle_response(response)
 
-    def get_course(self, course_id: int, use_cache: bool = True) -> Dict:
+    def get_course(self, course_id: int, use_cache: bool = True) -> dict:
         """
         Get course details by ID.
 
@@ -225,7 +229,7 @@ class RttlApiClient:
             use_cache=use_cache)
         return self._handle_response(response)
 
-    def create_course(self, course_data: Dict) -> Dict:
+    def create_course(self, course_data: dict) -> dict:
         """
         Create a new course.
 
@@ -242,7 +246,7 @@ class RttlApiClient:
             use_cache=False)
         return self._handle_response(response)
 
-    def update_course(self, course_id: int, course_data: Dict) -> Dict:
+    def update_course(self, course_id: int, course_data: dict) -> dict:
         """
         Update an existing course.
 
@@ -279,8 +283,8 @@ class RttlApiClient:
     def list_course_statuses(
             self,
             course_id: int,
-            configs: bool = None,
-            use_cache: bool = True) -> List[Dict]:
+            configs: bool | None = None,
+            use_cache: bool = True) -> list[dict]:
         """
         List statuses for a specific course.
 
@@ -304,7 +308,7 @@ class RttlApiClient:
             self,
             course_id: int,
             status_id: int,
-            use_cache: bool = True) -> Dict:
+            use_cache: bool = True) -> dict:
         """
         Get specific course status details.
 
@@ -322,7 +326,7 @@ class RttlApiClient:
             use_cache=use_cache)
         return self._handle_response(response)
 
-    def create_course_status(self, course_id: int, status_data: Dict) -> Dict:
+    def create_course_status(self, course_id: int, status_data: dict) -> dict:
         """
         Create a new status for a course.
 
@@ -343,7 +347,7 @@ class RttlApiClient:
             self,
             course_id: int,
             status_id: int,
-            status_data: Dict) -> Dict:
+            status_data: dict) -> dict:
         """
         Update an existing course status.
 
@@ -378,7 +382,7 @@ class RttlApiClient:
             use_cache=False)
         return response.status_code == 204
 
-    def create_or_update_course_status(self, status_data: Dict) -> Dict:
+    def create_or_update_course_status(self, status_data: dict) -> dict:
         """
         Convenience method to create course and/or status in one call.
 
@@ -399,8 +403,8 @@ class RttlApiClient:
     def list_course_configs(
             self,
             course_id: int,
-            applied: bool = None,
-            use_cache: bool = True) -> List[Dict]:
+            applied: bool | None = None,
+            use_cache: bool = True) -> list[dict]:
         """
         List configurations for a specific course.
 
@@ -423,8 +427,8 @@ class RttlApiClient:
     # Admin Course methods
     def list_admin_courses(
             self,
-            sis_id: str = None,
-            use_cache: bool = True) -> List[Dict]:
+            sis_id: str | None = None,
+            use_cache: bool = True) -> list[dict]:
         """
         List admin courses.
 
@@ -446,7 +450,7 @@ class RttlApiClient:
     def get_admin_course(
             self,
             admin_course_id: int,
-            use_cache: bool = True) -> Dict:
+            use_cache: bool = True) -> dict:
         """
         Get admin course details by ID.
 
@@ -467,7 +471,7 @@ class RttlApiClient:
     def get_course_by_sis_id(
             self,
             sis_course_id: str,
-            use_cache: bool = True) -> Optional[Dict]:
+            use_cache: bool = True) -> dict | None:
         """
         Get course by SIS ID.
 
@@ -481,7 +485,7 @@ class RttlApiClient:
         courses = self.list_courses(sis_id=sis_course_id, use_cache=use_cache)
         return courses[0] if courses else None
 
-    def clear_cache(self, pattern: str = None):
+    def clear_cache(self, pattern: str | None = None):
         """
         Clear cached API responses.
 
@@ -494,7 +498,7 @@ class RttlApiClient:
         logger.warning("Cache clearing not implemented for basic Django cache \
                        backend")
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> dict:
         """
         Get cache statistics (limited with Django's basic cache).
         """
@@ -523,7 +527,7 @@ def get_rttl_client(
 
 def get_course_status_by_sis_id(
         sis_course_id: str,
-        use_cache: bool = True) -> Optional[Dict]:
+        use_cache: bool = True) -> dict | None:
     """
     Quick function to get course status by SIS ID.
 
